@@ -1,24 +1,22 @@
-from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer as BaseTokenObtainPairSerializer,
+)
+
+from core.serializers import UserSerializer
 
 
-class CookieTokenRefreshSerializer(TokenRefreshSerializer):
-    refresh = None
-
+class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
     def validate(self, attrs):
-        attrs["refresh"] = self.context["request"].COOKIES.get("refresh")
-        if attrs["refresh"]:
-            return super().validate(attrs)
-        else:
-            raise InvalidToken('No valid token found in cookie "refresh"')
+        attrs = super().validate(attrs)
+        seriazlier = UserSerializer(self.user, context=self.context)
+        return {"user": seriazlier.data, **attrs}
 
 
-class CookieTokenBlackListSerializer(TokenRefreshSerializer):
-    refresh = None
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
 
-    def validate(self, attrs):
-        attrs["refresh"] = self.context.get("request").COOKIES.get("refresh")
-        if attrs["refresh"]:
-            return super().validate(attrs)
-        else:
-            raise InvalidToken('No valid token found in cookie "refresh"')
+
+class ResetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, required=True)
+    token = serializers.CharField(required=True)

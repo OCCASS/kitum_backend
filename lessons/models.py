@@ -1,19 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
 from core.models import BaseModel
 
+from .exceptions import *
+
 User = get_user_model()
-
-
-class Lesson(BaseModel):
-    """Модель урока"""
-
-    class Meta:
-        db_table = "lesson"
-
-    title = models.CharField(max_length=255, blank=False)
-    content = models.TextField(blank=False)
 
 
 class Task(BaseModel):
@@ -25,8 +18,18 @@ class Task(BaseModel):
     kim_number = models.IntegerField()
     cost = models.IntegerField()
     content = models.TextField()
-    answer = models.CharField(max_length=255)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="tasks")
+    correct_answer = models.CharField(max_length=255, null=True)
+
+
+class Lesson(BaseModel):
+    """Модель урока"""
+
+    class Meta:
+        db_table = "lesson"
+
+    title = models.CharField(max_length=255, blank=False)
+    content = models.TextField(blank=False)
+    tasks = models.ManyToManyField(Task)
 
 
 class TaskFile(BaseModel):
@@ -35,6 +38,7 @@ class TaskFile(BaseModel):
     class Meta:
         db_table = "task_file"
 
+    name = models.CharField(max_length=255, blank=False)
     file = models.FileField(upload_to="files")
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="files")
 
@@ -52,18 +56,74 @@ class UserLesson(BaseModel):
     is_skipped = models.BooleanField(default=False)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
+    complete_tasks_deadline = models.DateTimeField(null=False)
+    is_tasks_completed = models.BooleanField(default=False)
+
+    def try_complete(self) -> None:
+        if self.is_closed:
+            raise LessonClosed
+        elif self.is_skipped:
+            raise LessonAlreadySkipped
+        elif self.is_completed:
+            raise LessonAlreadyCompleted
+
+        self.is_completed = True
+        self.completed_at = timezone.now()
+        self.save()
+
+    def try_complete_tasks(self) -> None:
+        if self.is_closed:
+            raise LessonClosed
+        elif self.is_tasks_completed:
+            raise LessonTasksAlreadyCompleted
+
+        self.is_tasks_completed = True
+
+        for task in self.tasks.all():
+            if not task.answer:
+                task.is_skipped = True
+                task.save()
+
+        self.save()
+
+    def try_skip(self) -> None:
+        if self.is_closed:
+            raise LessonClosed
+        elif self.is_skipped:
+            raise LessonAlreadySkipped
+        elif self.is_completed:
+            raise LessonAlreadyCompleted
+
+        self.is_skipped = True
+        self.is_completed = True
+        self.completed_at = timezone.now()
+        self.save()
 
 
-class UserTask(BaseModel):
+class UserLessonTask(BaseModel):
     """Задача пользователя, которая доступна ему"""
 
     class Meta:
-        db_table = "user_task"
+        db_table = "user_lesson_task"
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     lesson = models.ForeignKey(
         UserLesson, on_delete=models.CASCADE, related_name="tasks"
     )
-    answer = models.CharField(max_length=255)
+    answer = models.CharField(max_length=255, null=True)
     is_correct = models.BooleanField(null=True, default=None)
     is_skipped = models.BooleanField(default=False)
+
+    def try_answer(self, answer: str) -> None:
+        self.answer = answer
+        self.is_correct = self.task.correct_answer == answer
+        self.save()
+
+    def try_skip(self) -> None:
+        if self.is_skipped:
+            raise TaskAlreadySkipped
+        elif self.answer != None:
+            raise TaskAlreadyAnswered
+
+        self.is_skipped = True
+        self.save()
