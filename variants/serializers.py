@@ -15,6 +15,7 @@ class UserVariantTaskSerializer(ModelSerializer):
     kim_number = SerializerMethodField()
     cost = SerializerMethodField()
     content = SerializerMethodField()
+    type = SerializerMethodField()
     files = SerializerMethodField()
 
     class Meta:
@@ -25,6 +26,7 @@ class UserVariantTaskSerializer(ModelSerializer):
             "cost",
             "content",
             "answer",
+            "type",
             "is_correct",
             "is_skipped",
             "created_at",
@@ -39,6 +41,9 @@ class UserVariantTaskSerializer(ModelSerializer):
 
     def get_cost(self, obj: UserVariantTask):
         return obj.task.cost
+
+    def get_type(self, obj: UserVariantTask):
+        return obj.task.type
 
     def get_content(self, obj: UserVariantTask):
         return obj.task.content

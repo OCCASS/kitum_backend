@@ -29,6 +29,7 @@ class UserLessonTaskSerializer(ModelSerializer):
     kim_number = SerializerMethodField()
     cost = SerializerMethodField()
     content = SerializerMethodField()
+    type = SerializerMethodField()
     files = SerializerMethodField()
 
     class Meta:
@@ -39,6 +40,7 @@ class UserLessonTaskSerializer(ModelSerializer):
             "cost",
             "content",
             "answer",
+            "type",
             "is_correct",
             "is_skipped",
             "created_at",
@@ -56,6 +58,9 @@ class UserLessonTaskSerializer(ModelSerializer):
 
     def get_content(self, obj: UserLessonTask):
         return obj.task.content
+
+    def get_type(self, obj: UserLessonTask):
+        return obj.task.type
 
     def get_files(self, obj: UserLessonTask):
         files = obj.task.files.all()
