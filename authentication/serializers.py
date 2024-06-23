@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenObtainPairSerializer,
@@ -5,12 +6,20 @@ from rest_framework_simplejwt.serializers import (
 
 from core.serializers import UserSerializer
 
+User = get_user_model()
+
 
 class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         seriazlier = UserSerializer(self.user, context=self.context)
         return {"user": seriazlier.data, **attrs}
+
+    @classmethod
+    def get_token(cls, user: User):
+        token = super().get_token(user)
+        token["is_admin"] = user.is_admin
+        return token
 
 
 class ResetPasswordRequestSerializer(serializers.Serializer):
