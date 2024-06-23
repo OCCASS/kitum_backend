@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Case, When
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -16,9 +16,6 @@ class LessonsView(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = [IsAuthenticated]
-
-    def filter_queryset(self, queryset):
-        return queryset.filter(user=self.request.user).order_by("-created_at")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -173,9 +170,3 @@ class HomeworkLessons(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = [IsAuthenticated]
-
-    def filter_queryset(self, queryset):
-        return queryset.filter(
-            is_completed=True,
-            user=self.request.user,
-        ).order_by("-created_at")

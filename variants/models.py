@@ -22,6 +22,10 @@ class Variant(BaseModel):
 class UserVariant(BaseModel):
     class Meta:
         db_table = "user_variant"
+        ordering = (
+            "-completed_at",
+            "started_at",
+        )
 
     variant = models.ForeignKey(Variant, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

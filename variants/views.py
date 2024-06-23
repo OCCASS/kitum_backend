@@ -17,9 +17,6 @@ class VariantsView(ListAPIView):
     serializer_class = UserVariantWithoutTasksSerializer
     permission_classes = [IsAuthenticated]
 
-    def filter_queryset(self, queryset):
-        return queryset.order_by("-started_at")
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
