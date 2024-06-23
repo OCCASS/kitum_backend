@@ -12,6 +12,11 @@ User = get_user_model()
 class Task(BaseModel):
     """Задача из ЕГЭ"""
 
+    ANY = "A"
+    TABLE = "T"
+    TYPE_CHOICES = {ANY: "Any", TABLE: "Table"}
+    TABLE_TYPE_KIM_NUMBERS = (17, 18, 20, 25, 26, 27)
+
     class Meta:
         db_table = "task"
 
@@ -19,6 +24,12 @@ class Task(BaseModel):
     cost = models.IntegerField()
     content = models.TextField()
     correct_answer = models.CharField(max_length=255, null=True)
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=ANY)
+
+    def save(self, *args, **kwargs):
+        if self.kim_number in self.TABLE_TYPE_KIM_NUMBERS:
+            self.type = self.TABLE
+        super().save(*args, **kwargs)
 
 
 class Lesson(BaseModel):
@@ -48,6 +59,11 @@ class UserLesson(BaseModel):
 
     class Meta:
         db_table = "user_lesson"
+        ordering = (
+            "is_tasks_completed",
+            "-is_completed",
+            "created_at",
+        )
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
@@ -117,6 +133,7 @@ class UserLessonTask(BaseModel):
     def try_answer(self, answer: str) -> None:
         self.answer = answer
         self.is_correct = self.task.correct_answer == answer
+        self.is_skipped = False
         self.save()
 
     def try_skip(self) -> None:
