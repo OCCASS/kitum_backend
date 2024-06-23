@@ -28,6 +28,7 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
     email = models.EmailField(null=False, unique=True)
     password = models.CharField(max_length=256)
     is_confirmed = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ("first_name", "last_name")
