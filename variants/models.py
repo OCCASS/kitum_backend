@@ -63,11 +63,11 @@ class UserVariantTask(BaseModel):
     variant = models.ForeignKey(
         UserVariant, on_delete=models.CASCADE, related_name="tasks"
     )
-    answer = models.CharField(max_length=255, null=True)
+    answer = models.JSONField(null=True)
     is_correct = models.BooleanField(null=True, default=None)
     is_skipped = models.BooleanField(default=False)
 
-    def try_answer(self, answer: str) -> None:
+    def try_answer(self, answer: list) -> None:
         self.answer = answer
         self.is_correct = self.task.correct_answer == answer
         self.save()

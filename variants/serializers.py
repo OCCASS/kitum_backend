@@ -1,5 +1,5 @@
 from rest_framework.serializers import (
-    CharField,
+    JSONField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
@@ -112,4 +112,4 @@ class UserVariantWithoutTasksSerializer(UserVariantSerializer):
 
 
 class AnswerTaskSerializer(Serializer):
-    answer = CharField()
+    answer = JSONField(required=True)

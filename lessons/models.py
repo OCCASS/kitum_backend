@@ -23,7 +23,7 @@ class Task(BaseModel):
     kim_number = models.IntegerField()
     cost = models.IntegerField()
     content = models.TextField()
-    correct_answer = models.CharField(max_length=255, null=True)
+    correct_answer = models.JSONField(null=False)
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=ANY)
 
     def save(self, *args, **kwargs):
@@ -126,11 +126,11 @@ class UserLessonTask(BaseModel):
     lesson = models.ForeignKey(
         UserLesson, on_delete=models.CASCADE, related_name="tasks"
     )
-    answer = models.CharField(max_length=255, null=True)
+    answer = models.JSONField(null=True)
     is_correct = models.BooleanField(null=True, default=None)
     is_skipped = models.BooleanField(default=False)
 
-    def try_answer(self, answer: str) -> None:
+    def try_answer(self, answer: list) -> None:
         self.answer = answer
         self.is_correct = self.task.correct_answer == answer
         self.is_skipped = False

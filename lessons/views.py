@@ -127,12 +127,9 @@ class AnswerLessonTaskView(APIView):
 
         task = self.get_task_object(task_pk=task_pk, lesson_pk=pk, user=request.user)
         serializer = AnswerTaskSerializer(data=request.data)
-        if serializer.is_valid():
-            task.try_answer(serializer.validated_data["answer"])
-            return Response(
-                UserLessonSerializer(lesson, context={"request": request}).data
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        task.try_answer(serializer.data["answer"])
+        return Response(UserLessonSerializer(lesson, context={"request": request}).data)
 
 
 class SkipLessonTaskView(APIView):
