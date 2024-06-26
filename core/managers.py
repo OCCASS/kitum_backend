@@ -22,6 +22,6 @@ class CustomUserManager(BaseUserManager):
         self, first_name: str, last_name: str, email: str, password: str, **extra_fields
     ):
         user = self.create_user(first_name, last_name, email, password, **extra_fields)
-        user.is_admin = True
+        user.is_staff = True
         user.save()
         return user
