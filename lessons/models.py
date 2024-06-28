@@ -60,6 +60,7 @@ class UserLesson(BaseModel):
     class Meta:
         db_table = "user_lesson"
         ordering = (
+            "is_closed",
             "is_tasks_completed",
             "-is_completed",
             "created_at",
