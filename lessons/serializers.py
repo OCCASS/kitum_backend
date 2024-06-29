@@ -1,4 +1,5 @@
 from rest_framework.serializers import (
+    CharField,
     JSONField,
     ModelSerializer,
     Serializer,
@@ -70,8 +71,8 @@ class UserLessonTaskSerializer(ModelSerializer):
 
 class UserLessonSerializer(ModelSerializer):
     id = SerializerMethodField()
-    title = SerializerMethodField()
-    content = SerializerMethodField()
+    title = CharField()
+    content = CharField()
     tasks = SerializerMethodField()
 
     class Meta:
@@ -95,28 +96,36 @@ class UserLessonSerializer(ModelSerializer):
     def get_id(self, obj: UserLesson) -> str:
         return obj.lesson.id
 
-    def get_title(self, obj: UserLesson) -> str:
-        return obj.lesson.title
-
-    def get_content(self, obj: UserLesson) -> str:
-        return obj.lesson.content
-
     def get_tasks(self, obj: UserLesson):
-        tasks = obj.tasks.all().order_by("created_at")
-        serializer = UserLessonTaskSerializer(
-            tasks, many=True, read_only=True, context=self.context
-        )
-        return serializer.data
+        if self._should_hide_tasks(obj):
+            return []
+        return self._serialized_tasks(obj)
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed
-        if not instance.is_completed and not instance.is_skipped:
+        if self._should_hide_tasks(instance):
             self.fields.pop("tasks", None)
 
         data = super().to_representation(instance)
         if "tasks" in data:
             data["tasks"] = sorted(data["tasks"], key=lambda task: task["created_at"])
         return data
+
+    def _should_hide_tasks(self, obj: UserLesson):
+        return (not obj.is_completed and not obj.is_skipped) or self.context.get(
+            "without_tasks", False
+        )
+
+    def _serialized_tasks(self, obj: UserLesson):
+        tasks = (
+            obj.tasks.prefetch_related("task", "task__files")
+            .all()
+            .order_by("created_at")
+        )
+        serializer = UserLessonTaskSerializer(
+            tasks, many=True, read_only=True, context=self.context
+        )
+        return serializer.data
 
 
 class AnswerTaskSerializer(Serializer):

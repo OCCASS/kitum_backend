@@ -46,6 +46,7 @@ class Lesson(BaseModel):
     subscribtion = models.ForeignKey(
         Subscribtion, on_delete=models.SET_NULL, related_name="lessons", null=True
     )
+    opens_at = models.DateTimeField()
 
 
 class TaskFile(BaseModel):

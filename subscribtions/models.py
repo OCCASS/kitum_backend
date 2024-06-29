@@ -25,4 +25,4 @@ class UserSubscribtion(BaseModel):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     subscribtion = models.ForeignKey(Subscribtion, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
-    is_active = models.BooleanField(default=False)
+    active_before = models.DateTimeField(default=None, null=True)

@@ -1,10 +1,9 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from core.permissions import IsOwner
 
 from .models import *
 from .permissions import *
@@ -21,21 +20,17 @@ class LessonsView(ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update({"request": self.request})
+        context.update({"request": self.request, "without_tasks": True})
         return context
 
 
 class LessonView(RetrieveAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = [IsAuthenticated, IsOwner, IsLessonOpened]
+    permission_classes = [IsAuthenticated, IsLessonOpened]
 
     def get_object(self):
-        obj = get_object_or_404(
-            UserLesson,
-            lesson__pk=self.kwargs["pk"],
-            user=self.request.user,
-        )
+        obj = self._get_lesson(self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -43,6 +38,13 @@ class LessonView(RetrieveAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+    def _get_lesson(self, pk: str) -> UserLesson:
+        user = self.request.user
+        obj = UserLesson.objects.avaible_for(user).filter(lesson__pk=pk).first()
+        if not obj:
+            raise Http404
+        return obj
 
 
 class CompleteLessonView(APIView):
@@ -169,3 +171,11 @@ class HomeworkLessons(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserLesson.objects.avaible_for(self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"without_tasks": True})
+        return context
