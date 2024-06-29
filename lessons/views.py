@@ -1,4 +1,3 @@
-from django.db.models import Case, When
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +15,9 @@ class LessonsView(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserLesson.objects.avaible_for(self.request.user)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

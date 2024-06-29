@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "variants",
     "user",
     "core",
+    "subscribtions",
 ]
 
 MIDDLEWARE = [

@@ -3,6 +3,8 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
+from lessons.managers import UserLessonManager
+from subscribtions.models import Subscribtion
 
 from .exceptions import *
 
@@ -41,6 +43,9 @@ class Lesson(BaseModel):
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
+    subscribtion = models.ForeignKey(
+        Subscribtion, on_delete=models.SET_NULL, related_name="lessons", null=True
+    )
 
 
 class TaskFile(BaseModel):
@@ -75,6 +80,8 @@ class UserLesson(BaseModel):
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField(null=False)
     is_tasks_completed = models.BooleanField(default=False)
+
+    objects = UserLessonManager()
 
     def try_complete(self) -> None:
         if self.is_closed:
