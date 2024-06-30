@@ -1,10 +1,9 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.mixins import Response, status
+from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView
+from rest_framework.mixins import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 
-from .models import *
+from .exceptions import VariantNotStarted, VariantCompleted
 from .serializers import *
 
 User = get_user_model()
@@ -15,7 +14,7 @@ class VariantsView(ListAPIView):
 
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantWithoutTasksSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -28,7 +27,7 @@ class VariantView(RetrieveAPIView):
 
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     def get_object(self):
         obj = get_object_or_404(
@@ -45,104 +44,125 @@ class VariantView(RetrieveAPIView):
         return context
 
 
-class StartVariantView(APIView):
-    permission_classes = [IsAuthenticated]
+class StartVariantView(GenericAPIView):
+    queryset = UserVariant.objects.all()
+    serializer_class = UserVariantSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def get_object(self, pk: str, user: User) -> UserVariant:
-        return get_object_or_404(UserVariant, variant__pk=pk, user=user)
+    def post(self, request, *args, **kwargs):
+        variant = self.get_object()
+        variant.start()
+        return Response(self.get_serializer(variant).data)
 
-    def post(self, request, pk: str):
-        obj = self.get_object(pk, request.user)
-        obj.start()
-        return Response(UserVariantSerializer(obj, context={"request": request}).data)
+    def get_object(self) -> UserVariant:
+        variant = get_object_or_404(UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user)
+        self.check_object_permissions(self.request, variant)
+        return variant
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 
-class CompleteVariantView(APIView):
-    permission_classes = [IsAuthenticated]
+class CompleteVariantView(GenericAPIView):
+    serializer_class = UserVariantSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def get_object(self, pk: str, user: User) -> UserVariant:
-        return get_object_or_404(UserVariant, variant__pk=pk, user=user)
+    def get_object(self) -> UserVariant:
+        obj = get_object_or_404(UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
-    def post(self, request, pk: str):
-        obj = self.get_object(pk, request.user)
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
         obj.complete()
-        return Response(UserVariantSerializer(obj, context={"request": request}).data)
+        return Response(self.get_serializer(obj).data)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 
-class AnswerVariantTaskView(APIView):
-    permission_classes = [IsAuthenticated]
+class AnswerVariantTaskView(GenericAPIView):
+    serializer_class = UserVariantSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def get_variant_object(self, pk: str, user: User) -> UserVariant:
-        return get_object_or_404(UserVariant, variant__pk=pk, user=user)
+    def post(self, request, *args, **kwargs):
+        variant = self._get_user_variant_or_fail()
+        self._validate_started_and_not_completed(variant)
 
-    def get_task_object(
-        self, task_pk: str, variant_pk: str, user: User
-    ) -> UserVariantTask:
+        task = self._get_user_variant_task_or_fail()
+        self._try_to_answer_task(task)
+
+        serialized_variant = self.get_serializer(variant)
+        return Response(serialized_variant.data)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+    def _get_user_variant_or_fail(self):
+        return get_object_or_404(UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user)
+
+    def _validate_started_and_not_completed(self, variant: UserVariant):
+        if not variant.is_started:
+            raise VariantNotStarted
+        if variant.is_completed:
+            raise VariantCompleted
+
+    def _get_user_variant_task_or_fail(self):
         return get_object_or_404(
             UserVariantTask,
-            variant__variant__pk=variant_pk,
-            task__pk=task_pk,
-            variant__user=user,
+            variant__variant__pk=self.kwargs["pk"],
+            task__pk=self.kwargs["task_pk"],
+            variant__user=self.request.user,
         )
 
-    def post(self, request, pk: str, task_pk: str):
-        variant = self.get_variant_object(pk, request.user)
+    def _try_to_answer_task(self, task: UserVariantTask):
+        answer_data = self._get_answer_data()
+        task.try_answer(answer_data)
 
-        if not variant.is_started:
-            return Response(
-                {"detail": "Variant is not started."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if variant.is_completed:
-            return Response(
-                {"detail": "Variant completed."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        task = self.get_task_object(task_pk=task_pk, variant_pk=pk, user=request.user)
-        serializer = AnswerTaskSerializer(data=request.data)
-        if serializer.is_valid():
-            task.try_answer(serializer.validated_data["answer"])
-            return Response(
-                UserVariantSerializer(variant, context={"request": request}).data
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def _get_answer_data(self) -> list:
+        serializer = AnswerTaskSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data.get("answer", [])
 
 
-class SkipVariantTaskView(APIView):
-    permission_classes = [IsAuthenticated]
+class SkipVariantTaskView(GenericAPIView):
+    serializer_class = UserVariantSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def get_variant_object(self, pk: str, user: User) -> UserVariant:
-        return get_object_or_404(UserVariant, variant__pk=pk, user=user)
+    def post(self, request, *args, **kwargs):
+        variant = self._get_user_variant_or_fail()
+        self._validate_started_and_not_completed(variant)
 
-    def get_task_object(
-        self, task_pk: str, variant_pk: str, user: User
-    ) -> UserVariantTask:
-        return get_object_or_404(
-            UserVariantTask,
-            variant__variant__pk=variant_pk,
-            task__pk=task_pk,
-            variant__user=user,
-        )
-
-    def post(self, request, pk: str, task_pk: str):
-        variant = self.get_variant_object(pk, request.user)
-
-        if not variant.is_started:
-            return Response(
-                {"detail": "Variant is not started."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if variant.is_completed:
-            return Response(
-                {"detail": "Variant completed."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        task = self.get_task_object(task_pk=task_pk, variant_pk=pk, user=request.user)
+        task = self._get_user_variant_task_or_fail()
         task.try_skip()
-        return Response(
-            UserVariantSerializer(variant, context={"request": request}).data
+
+        serialized_variant = self.get_serializer(variant)
+        return Response(serialized_variant.data)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+    def _get_user_variant_or_fail(self):
+        return get_object_or_404(UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user)
+
+    def _validate_started_and_not_completed(self, variant: UserVariant):
+        if not variant.is_started:
+            raise VariantNotStarted
+        if variant.is_completed:
+            raise VariantCompleted
+
+    def _get_user_variant_task_or_fail(self):
+        return get_object_or_404(
+            UserVariantTask,
+            variant__variant__pk=self.kwargs["pk"],
+            task__pk=self.kwargs["task_pk"],
+            variant__user=self.request.user,
         )

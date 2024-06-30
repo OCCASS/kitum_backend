@@ -6,7 +6,6 @@ from rest_framework.serializers import (
 )
 
 from lessons.serializers import TaskFileSerializer
-
 from .models import *
 
 
@@ -76,17 +75,17 @@ class UserVariantSerializer(ModelSerializer):
         data = super().to_representation(instance)
         if "tasks" in data:
             is_not_completed = not instance.is_completed
-            data["tasks"] = self._prepare_tasks(
+            data["tasks"] = self.prepare_tasks(
                 data["tasks"], hide_correctness=is_not_completed
             )
         return data
 
-    def _prepare_tasks(self, tasks: list, *, hide_correctness: bool) -> list:
+    def prepare_tasks(self, tasks: list, *, hide_correctness: bool) -> list:
         if hide_correctness:
-            tasks = self._hide_tasks_correctness(tasks)
+            tasks = self.hide_tasks_correctness(tasks)
         return sorted(tasks, key=lambda task: task["kim_number"])
 
-    def _hide_tasks_correctness(self, tasks: list) -> list:
+    def hide_tasks_correctness(self, tasks: list) -> list:
         for i in range(len(tasks)):
             tasks[i]["is_correct"] = None
         return tasks
@@ -98,7 +97,11 @@ class UserVariantSerializer(ModelSerializer):
         return obj.variant.title
 
     def get_tasks(self, obj: UserVariant):
-        tasks = obj.tasks.all()
+        tasks = (
+            obj.tasks.prefetch_related("task", "task__files")
+            .all()
+            .order_by("task__kim_number")
+        )
         serializer = UserVariantTaskSerializer(
             tasks, many=True, read_only=True, context=self.context
         )

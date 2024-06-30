@@ -7,6 +7,7 @@ from lessons.exceptions import TaskAlreadyAnswered, TaskAlreadySkipped
 from lessons.models import Task
 
 from .exceptions import VariantAlreadyCompleted, VariantAlreadyStarted
+from .managers import UserVariantManager
 
 User = get_user_model()
 
@@ -32,6 +33,8 @@ class UserVariant(BaseModel):
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
+    objects = UserVariantManager()
+
     def start(self):
         if self.started_at:
             raise VariantAlreadyStarted
@@ -48,6 +51,7 @@ class UserVariant(BaseModel):
             raise VariantAlreadyCompleted
 
         self.completed_at = timezone.now()
+        self.tasks.filter(answer=None).update(is_skipped=True)
         self.save()
 
     @property
@@ -75,7 +79,7 @@ class UserVariantTask(BaseModel):
     def try_skip(self) -> None:
         if self.is_skipped:
             raise TaskAlreadySkipped
-        elif self.answer != None:
+        elif self.answer is not None:
             raise TaskAlreadyAnswered
 
         self.is_skipped = True
