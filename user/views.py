@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from authentication.serializers import UserSerializer
-
 from .serializers import EditUserAvatarSerializer, EditUserSerializer
 
 User = get_user_model()
@@ -22,8 +21,10 @@ class UserView(RetrieveAPIView):
         context.update({"request": self.request})
         return context
 
-    def get_object(self):
-        return self.request.user
+    def get_object(self) -> User:
+        user = self.request.user
+        self.check_object_permissions(self.request, user)
+        return user
 
 
 class EditUserView(GenericAPIView):
@@ -31,17 +32,22 @@ class EditUserView(GenericAPIView):
     serializer_class = EditUserSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
-        return self.request.user
-
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def post(self, request, *args, **kwargs):
         user = self.get_object()
-        user.first_name = serializer.validated_data["first_name"].capitalize()
-        user.last_name = serializer.validated_data["last_name"].capitalize()
-        user.save()
-        return Response(UserSerializer(user, context={"request": request}).data)
+        serializer = self.get_serializer(instance=user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(user, context=self.get_serializer_context()).data)
+
+    def get_object(self) -> User:
+        user = self.request.user
+        self.check_object_permissions(self.request, user)
+        return user
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 
 class EditUserAvatarView(GenericAPIView):
@@ -50,17 +56,24 @@ class EditUserAvatarView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     parser_classes = (MultiPartParser,)
 
-    def get_object(self):
-        return self.request.user
-
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         file_obj = request.FILES["avatar"]
         user = self.get_object()
-        user.avatar = file_obj
-        user.save()
+        self.update_user_avatar(user, file_obj)
+
         return Response(
             UserSerializer(user, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
+
+    def get_object(self) -> User:
+        user = self.request.user
+        self.check_object_permissions(self.request, user)
+        return user
+
+    def update_user_avatar(self, user: User, avatar):
+        user.avatar = avatar
+        user.save()
