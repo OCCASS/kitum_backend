@@ -165,21 +165,19 @@ class SkipLessonTaskView(GenericAPIView):
     serializer_class = UserLessonSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_lesson_object(self, pk: str, user: User) -> UserLesson:
-        return get_object_or_404(UserLesson, lesson__pk=pk, user=user)
+    def get_lesson_object(self) -> UserLesson:
+        return UserLesson.objects.available_for_or_404(self.kwargs["pk"], self.request.user)
 
-    def get_task_object(
-        self, task_pk: str, lesson_pk: str, user: User
-    ) -> UserLessonTask:
+    def get_task_object(self) -> UserLessonTask:
         return get_object_or_404(
             UserLessonTask,
-            lesson__lesson__pk=lesson_pk,
-            task__pk=task_pk,
-            lesson__user=user,
+            lesson__lesson__pk=self.kwargs["pk"],
+            task__pk=self.kwargs["task_pk"],
+            lesson__user=self.request.user,
         )
 
-    def post(self, request, pk: str, task_pk: str):
-        lesson = self.get_lesson_object(pk, request.user)
+    def post(self, request, *args, **kwargs):
+        lesson = self.get_lesson_object()
 
         if lesson.is_tasks_completed:
             return Response(
@@ -187,7 +185,7 @@ class SkipLessonTaskView(GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        task = self.get_task_object(task_pk=task_pk, lesson_pk=pk, user=request.user)
+        task = self.get_task_object()
         task.try_skip()
         return Response(self.get_serializer(lesson).data)
 
