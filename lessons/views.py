@@ -1,4 +1,3 @@
-from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import (
     GenericAPIView,
@@ -9,7 +8,6 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import *
 from .permissions import *
 from .serializers import *
 
@@ -20,7 +18,7 @@ class LessonsView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return UserLesson.objects.all_avaible_for(self.request.user)
+        return UserLesson.objects.all_available_for(self.request.user)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -44,7 +42,7 @@ class LessonView(RetrieveAPIView):
         return context
 
     def _get_lesson(self, pk: str) -> UserLesson:
-        return UserLesson.objects.avaible_for_or_404(pk, self.request.user)
+        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
 
 class CompleteLessonView(GenericAPIView):
@@ -53,10 +51,10 @@ class CompleteLessonView(GenericAPIView):
     serializer_class = UserLessonSerializer
 
     def get_object(self, pk: str) -> UserLesson:
-        return UserLesson.objects.avaible_for_or_404(pk, self.request.user)
+        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
     def post(self, request, pk: str):
-        obj = self.get_object(pk, request.user)
+        obj = self.get_object(pk)
         obj.try_complete()
         return Response(self.get_serializer(obj).data)
 
@@ -72,7 +70,7 @@ class CompleteLessonTasksView(GenericAPIView):
     serializer_class = UserLessonSerializer
 
     def get_object(self, pk: str) -> UserLesson:
-        return UserLesson.objects.avaible_for_or_404(pk, self.request.user)
+        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
     def post(self, request, pk: str):
         obj = self.get_object(pk)
@@ -91,7 +89,7 @@ class SkipLessonView(GenericAPIView):
     serializer_class = UserLessonSerializer
 
     def get_object(self, pk: str) -> UserLesson:
-        return UserLesson.objects.avaible_for_or_404(pk, self.request.user)
+        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
     def post(self, request, pk: str):
         obj = self.get_object(pk)
@@ -131,7 +129,7 @@ class AnswerLessonTaskView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_lesson_object(self, pk: str) -> UserLesson:
-        return UserLesson.objects.avaible_for_or_404(pk, self.request.user)
+        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
     def get_task_object(
         self, task_pk: str, lesson_pk: str, user: User
@@ -207,7 +205,7 @@ class HomeworkLessons(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return UserLesson.objects.all_avaible_for(self.request.user)
+        return UserLesson.objects.all_available_for(self.request.user)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

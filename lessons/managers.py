@@ -8,7 +8,7 @@ User = get_user_model()
 
 
 class UserLessonQuerySet(models.QuerySet):
-    def all_avaible_for(self, user: User):
+    def all_available_for(self, user: User):
         """Возвращает уроки, которые были куплены пользователем, то есть доступные ему"""
 
         user_subscription = self._get_active_user_subscription(user)
@@ -20,7 +20,7 @@ class UserLessonQuerySet(models.QuerySet):
         ).values("id")
         return self.filter(lesson__id__in=models.Subquery(lessons_subquery))
 
-    def avaible_for(self, pk: str, user: User):
+    def available_for(self, pk: str, user: User):
         """Возвращает урок, который были куплен пользователем, то есть доступный ему"""
 
         user_subscription = self._get_active_user_subscription(user)
@@ -51,11 +51,11 @@ class UserLessonManager(models.Manager):
             )
         )
 
-    def all_avaible_for(self, user: User):
-        return self.get_queryset().all_avaible_for(user)
+    def all_available_for(self, user: User):
+        return self.get_queryset().all_available_for(user)
 
-    def avaible_for_or_404(self, pk: str, user: User):
-        obj = self.get_queryset().avaible_for(pk, user)
+    def available_for_or_404(self, pk: str, user: User):
+        obj = self.get_queryset().available_for(pk, user)
         if not obj:
             raise Http404
         return obj

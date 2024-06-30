@@ -43,7 +43,7 @@ class Lesson(BaseModel):
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
-    subscribtion = models.ForeignKey(
+    subscription = models.ForeignKey(
         Subscription, on_delete=models.SET_NULL, related_name="lessons", null=True
     )
     opens_at = models.DateTimeField()
