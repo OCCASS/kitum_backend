@@ -1,3 +1,5 @@
+from typing import cast
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import Http404
@@ -32,6 +34,8 @@ class UserLessonQuerySet(models.QuerySet):
         ).first()
 
     def _get_active_user_subscription(self, user: User) -> UserSubscription | None:
+        """Получить текущую подписку пользователя, если ее нет, то возвращается `None`"""
+
         return (
             UserSubscription.objects.filter(
                 user=user, active_before__gte=timezone.now()
@@ -42,13 +46,14 @@ class UserLessonQuerySet(models.QuerySet):
 
 
 class UserLessonManager(models.Manager):
-    def get_queryset(self):
-        return (
+    def get_queryset(self) -> UserLessonQuerySet:
+        return cast(
+            UserLessonQuerySet,
             UserLessonQuerySet(self.model, using=self._db)
             .select_related("lesson")
             .annotate(
                 title=models.F("lesson__title"), content=models.F("lesson__content")
-            )
+            ),
         )
 
     def all_available_for(self, user: User):
@@ -59,3 +64,18 @@ class UserLessonManager(models.Manager):
         if not obj:
             raise Http404
         return obj
+
+
+class UserLessonTaskManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("task")
+            .annotate(
+                kim_number=models.F("task__kim_number"),
+                cost=models.F("task__cost"),
+                content=models.F("task__content"),
+                type=models.F("task__type"),
+            )
+        )

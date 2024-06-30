@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 from subscriptions.models import Subscription
 
-from lessons.managers import UserLessonManager
+from lessons.managers import UserLessonManager, UserLessonTaskManager
 
 from .exceptions import *
 
@@ -105,10 +105,6 @@ class UserLesson(BaseModel):
         self.is_tasks_completed = True
         self.tasks.filter(answer=None).update(is_skipped=True)
         self.save()
-        # for task in self.tasks.all():
-        # if not task.answer:
-        # task.is_skipped = True
-        # task.save()
 
     def try_skip(self) -> None:
         if self.is_closed:
@@ -138,6 +134,8 @@ class UserLessonTask(BaseModel):
     is_correct = models.BooleanField(null=True, default=None)
     is_skipped = models.BooleanField(default=False)
 
+    objects = UserLessonTaskManager()
+
     def try_answer(self, answer: list) -> None:
         self.answer = answer
         self.is_correct = self.task.correct_answer == answer
@@ -147,7 +145,7 @@ class UserLessonTask(BaseModel):
     def try_skip(self) -> None:
         if self.is_skipped:
             raise TaskAlreadySkipped
-        elif self.answer != None:
+        elif self.answer is not None:
             raise TaskAlreadyAnswered
 
         self.is_skipped = True

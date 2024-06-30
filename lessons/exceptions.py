@@ -9,7 +9,7 @@ class TaskAlreadyAnswered(APIException):
 
 class TaskAlreadySkipped(APIException):
     status_code = 400
-    default_detail = "Task alredy skipped."
+    default_detail = "Task already skipped."
     default_code = "already_skipped"
 
 
