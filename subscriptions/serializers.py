@@ -1,14 +1,14 @@
 from rest_framework.serializers import CharField, ModelSerializer
 
-from subscribtions.models import UserSubscribtion
+from subscriptions.models import UserSubscription
 
 
-class UserSubscribtionSerializer(ModelSerializer):
+class UserSubscriptionSerializer(ModelSerializer):
     title = CharField()
     price = CharField()
 
     class Meta:
-        model = UserSubscribtion
+        model = UserSubscription
         fields = (
             "id",
             "created_at",

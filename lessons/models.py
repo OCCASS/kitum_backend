@@ -1,10 +1,10 @@
+from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from subscriptions.models import Subscription
 
-from core.models import BaseModel
 from lessons.managers import UserLessonManager
-from subscribtions.models import Subscribtion
 
 from .exceptions import *
 
@@ -44,7 +44,7 @@ class Lesson(BaseModel):
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
     subscribtion = models.ForeignKey(
-        Subscribtion, on_delete=models.SET_NULL, related_name="lessons", null=True
+        Subscription, on_delete=models.SET_NULL, related_name="lessons", null=True
     )
     opens_at = models.DateTimeField()
 
@@ -103,13 +103,12 @@ class UserLesson(BaseModel):
             raise LessonTasksAlreadyCompleted
 
         self.is_tasks_completed = True
-
-        for task in self.tasks.all():
-            if not task.answer:
-                task.is_skipped = True
-                task.save()
-
+        self.tasks.filter(answer=None).update(is_skipped=True)
         self.save()
+        # for task in self.tasks.all():
+        # if not task.answer:
+        # task.is_skipped = True
+        # task.save()
 
     def try_skip(self) -> None:
         if self.is_closed:

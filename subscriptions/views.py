@@ -2,20 +2,19 @@ from django.db import models
 from django.utils import timezone
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
+from subscriptions.models import UserSubscription
+from subscriptions.serializers import UserSubscriptionSerializer
 
-from subscribtions.models import UserSubscribtion
-from subscribtions.serializers import UserSubscribtionSerializer
 
-
-class MySubscribtions(ListAPIView):
+class MySubscriptions(ListAPIView):
     queryset = (
-        UserSubscribtion.objects.all()
-        .select_related("subscribtion")
+        UserSubscription.objects.all()
+        .select_related("subscription")
         .annotate(
-            title=models.F("subscribtion__title"), price=models.F("subscribtion__price")
+            title=models.F("subscription__title"), price=models.F("subscription__price")
         )
     )
-    serializer_class = UserSubscribtionSerializer
+    serializer_class = UserSubscriptionSerializer
     permission_classes = (IsAuthenticated,)
 
     def filter_queryset(self, queryset):

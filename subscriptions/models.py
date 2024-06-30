@@ -6,23 +6,23 @@ from core.models import BaseModel
 User = get_user_model()
 
 
-class Subscribtion(BaseModel):
+class Subscription(BaseModel):
     """Модель подписки"""
 
     class Meta:
-        db_table = "subscribtion"
+        db_table = "subscription"
 
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
 
 
-class UserSubscribtion(BaseModel):
+class UserSubscription(BaseModel):
     """Модель подписки пользователя"""
 
     class Meta:
-        db_table = "user_subscribtion"
+        db_table = "user_subscription"
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    subscribtion = models.ForeignKey(Subscribtion, on_delete=models.SET_NULL, null=True)
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
     active_before = models.DateTimeField(default=None, null=True)
