@@ -101,11 +101,6 @@ LOGGING = {
         }
     },
     "loggers": {
-        "django.db.backends": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
         "django.request": {
             "level": "DEBUG",
             "handlers": ["console"],
@@ -136,8 +131,6 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PARSER_CLASSES": (
-        # "djangorestframework_camel_case.parser.CamelCaseFormParser",
-        # "djangorestframework_camel_case.parser.CamelCaseMultiPartParser",
         "djangorestframework_camel_case.parser.CamelCaseJSONParser",
     ),
     "DEFAULT_RENDERER_CLASSES": (
@@ -145,7 +138,6 @@ REST_FRAMEWORK = {
         "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
-    # "DATETIME_FORMAT": "%d.%m.%Y %H:%M:%S",
 }
 
 SIMPLE_JWT = {
