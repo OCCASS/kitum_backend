@@ -1,10 +1,9 @@
+from core.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenObtainPairSerializer,
 )
-
-from core.serializers import UserSerializer
 
 User = get_user_model()
 
@@ -12,7 +11,14 @@ User = get_user_model()
 class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        seriazlier = UserSerializer(self.user, context=self.context)
+        user: User = self.user
+
+        if not user.is_confirmed:
+            raise serializers.ValidationError(
+                "User account is not confirmed.", code="authorization"
+            )
+
+        seriazlier = UserSerializer(user, context=self.context)
         return {"user": seriazlier.data, **attrs}
 
     @classmethod
