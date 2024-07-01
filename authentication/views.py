@@ -1,7 +1,9 @@
 from typing import Literal, TypeAlias
 
+from core.serializers import UserSerializer
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils import timezone
 from rest_framework import permissions
@@ -15,7 +17,6 @@ from rest_framework_simplejwt.views import (
 
 from authentication.exceptions import PasswordResetRequestAlreadyCreated
 from authentication.models import PasswordReset
-from core.serializers import UserSerializer
 
 from .serializers import (
     ResetPasswordRequestSerializer,
@@ -79,8 +80,12 @@ class ResetPasswordRequestView(GenericAPIView):
             raise PasswordResetRequestAlreadyCreated
         token = self._create_token_for_user(email)
         reset_url = f"{settings.PASSWORD_RESET_BASE_URL}/?t={token}"
-        print(reset_url)
-
+        send_mail(
+            "KITUM – сброс пароля",
+            f"Ссылка для сбороса пароля – {reset_url}",
+            settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+        )
         return Response()
 
     def _can_reset(self, email: str) -> bool:
