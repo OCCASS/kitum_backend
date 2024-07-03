@@ -46,6 +46,8 @@ class Lesson(BaseModel):
     subscription = models.ForeignKey(
         Subscription, on_delete=models.SET_NULL, related_name="lessons", null=True
     )
+    is_required = models.BooleanField(default=True)
+    depends_on = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
     opens_at = models.DateTimeField()
 
 
