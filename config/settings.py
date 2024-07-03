@@ -159,6 +159,9 @@ CORS_ALLOW_CREDENTIALS = True
 PASSWORD_RESET_BASE_URL = env.str("PASSWORD_RESET_BASE_URL")
 PASSWORD_RESET_TOKEN_LIFETIME = timedelta(minutes=5)
 
+CONFIRM_MAIL_BASE_URL = env.str("CONFIRM_MAIL_BASE_URL")
+CONFIRM_MAIL_TOKEN_LIFETIME = timedelta(minutes=10)
+
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_USE_TLS = False
@@ -166,3 +169,6 @@ EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 EMAIL_HOST_USER = "pavlovtimur255@gmail.com"
 EMAIL_HOST_PASSWORD = "ohfi kosp snny cpcu"
+
+DEFAULT_WEEK_DAY_1 = 1  # Thuesday
+DEFAULT_WEEK_DAY_2 = 4  # Friday
