@@ -15,4 +15,5 @@ urlpatterns = [
         name="request_reset_password",
     ),
     path("reset_password/check/", ResetPasswordView.as_view(), name="reset_password"),
+    path("confirm_mail/", ConfirmMailView.as_view(), name="confirm_email"),
 ]

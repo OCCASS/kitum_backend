@@ -4,9 +4,13 @@ from core.serializers import UserSerializer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import send_mail
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.tokens import (
+    PasswordResetTokenGenerator,
+    default_token_generator,
+)
+from django.http import Http404
 from django.utils import timezone
-from rest_framework import permissions
+from rest_framework import permissions, serializers
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -15,10 +19,10 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
 
-from authentication.exceptions import PasswordResetRequestAlreadyCreated
-from authentication.models import PasswordReset
-
+from .exceptions import ConfirmMailTokenIsInvalid, PasswordResetRequestAlreadyCreated
+from .models import ConfirmMail, PasswordReset
 from .serializers import (
+    ConfirmMailSerializer,
     ResetPasswordRequestSerializer,
     ResetPasswordSerializer,
     TokenObtainPairSerializer,
@@ -37,6 +41,7 @@ class RegistrationView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = self._perform_create(serializer)
         tokens = self._get_user_tokens(user)
+        self._send_confirmation_mail(user)
         return self._create_response(tokens, serializer.data)
 
     def _create_response(self, tokens: TokensDict, data: dict) -> Response:
@@ -57,6 +62,17 @@ class RegistrationView(GenericAPIView):
     @staticmethod
     def _build_response_data(user_data: dict, tokens: TokensDict) -> dict:
         return {"user": user_data, **tokens}
+
+    def _send_confirmation_mail(self, user: User):
+        token = default_token_generator.make_token(user)
+        ConfirmMail(user=user, token=token).save()
+        url = f"{settings.CONFIRM_MAIL_BASE_URL}/?t={token}"
+        send_mail(
+            "KITUM – подтверждение почты",
+            url,
+            settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+        )
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
@@ -126,4 +142,31 @@ class ResetPasswordView(GenericAPIView):
     def _update_user_password(self, email: str, new_password: str) -> None:
         user = get_object_or_404(User, email=email)
         user.set_password(new_password)
+        user.save()
+
+
+class ConfirmMailView(GenericAPIView):
+    serializer_class = ConfirmMailSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self._confirm_token_owner_email(serializer.validated_data["token"])
+        return Response()
+
+    def _confirm_token_owner_email(self, token: str) -> None:
+        confirm_obj = (
+            ConfirmMail.objects.select_related("user")
+            .filter(token=token, expires_at__gt=timezone.now())
+            .first()
+        )
+        if confirm_obj is None:
+            raise ConfirmMailTokenIsInvalid
+        self._confirm_user_email(confirm_obj.user.email)
+        confirm_obj.delete()
+
+    def _confirm_user_email(self, email: str):
+        user = get_object_or_404(User, email=email)
+        user.is_confirmed = True
         user.save()
