@@ -29,7 +29,7 @@ class UserLessonQuerySet(models.QuerySet):
         )
         lessons_are_accessible = models.Q(
             lesson__depends_on__userlesson__is_closed=False,
-            lesson__depends_on__userlesson__is_completed=True,
+            lesson__depends_on__userlesson__is_tasks_completed=True,
         ) | models.Q(lesson__depends_on__isnull=True)
         query = (
             lessons_are_open
@@ -53,7 +53,7 @@ class UserLessonQuerySet(models.QuerySet):
         )
         lesson_is_accessible = models.Q(
             lesson__depends_on__userlesson__is_closed=False,
-            lesson__depends_on__userlesson__is_completed=True,
+            lesson__depends_on__userlesson__is_tasks_completed=True,
         ) | models.Q(lesson__depends_on__isnull=True)
         lesson_with_pk = models.Q(lesson__pk=pk)
         query = (
