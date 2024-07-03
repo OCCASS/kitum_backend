@@ -22,7 +22,7 @@ class UserSerializer(ModelSerializer):
 
     def get_avatar(self, obj: User):
         request = self.context.get("request")
-        if request:
+        if request and obj.avatar:
             return request.build_absolute_uri(obj.avatar.url)
         return ""
 
