@@ -7,11 +7,11 @@ from django.db import models
 User = get_user_model()
 
 
-class Schedule(BaseModel):
-    """Модель расписания пользователя"""
+class UserScheduleConfig(BaseModel):
+    """Модель конфигурации расписания для пользователя"""
 
     class Meta:
-        db_table = "schedule"
+        db_table = "user_schedule_config"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     week_day_1 = models.IntegerField(default=settings.DEFAULT_WEEK_DAY_1)
@@ -24,7 +24,7 @@ class Holiday(models.Model):
     class Meta:
         db_table = "holiday"
 
-    id = models.IntegerField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     day = models.PositiveIntegerField(
         validators=(MinValueValidator(1), MaxValueValidator(31))
     )
