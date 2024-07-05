@@ -26,6 +26,22 @@ class LessonsView(ListAPIView):
         return context
 
 
+class NotCompletedLessonsView(ListAPIView):
+    queryset = UserLesson.objects.all()
+    serializer_class = UserLessonSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return UserLesson.objects.all_available_for(self.request.user).filter(
+            is_tasks_completed=False
+        )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request, "without_tasks": True})
+        return context
+
+
 class LessonView(RetrieveAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
@@ -234,7 +250,25 @@ class HomeworkLessons(ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return UserLesson.objects.all_available_for(self.request.user)
+        return UserLesson.objects.all_available_for(self.request.user).filter(
+            is_completed=True
+        )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"without_tasks": True})
+        return context
+
+
+class NotCompletedHomeworkLessons(ListAPIView):
+    queryset = UserLesson.objects.all()
+    serializer_class = UserLessonSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return UserLesson.objects.all_available_for(self.request.user).filter(
+            is_tasks_completed=False, is_completed=True
+        )
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

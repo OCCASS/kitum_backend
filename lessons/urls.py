@@ -4,7 +4,17 @@ from .views import *
 
 urlpatterns = [
     path("", LessonsView.as_view(), name="lesson_list"),
+    path(
+        "not_completed/",
+        NotCompletedLessonsView.as_view(),
+        name="lesson_not_completed_list",
+    ),
     path("homework/", HomeworkLessons.as_view(), name="homework_list"),
+    path(
+        "homework/not_completed/",
+        NotCompletedHomeworkLessons.as_view(),
+        name="homework_list",
+    ),
     path("<str:pk>/", LessonView.as_view(), name="lesson_detail"),
     path(
         "<str:pk>/complete/",
