@@ -1,5 +1,3 @@
-import datetime
-
 from rest_framework import status
 from rest_framework.generics import (
     GenericAPIView,
@@ -21,26 +19,6 @@ class LessonsView(ListAPIView):
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user)
-
-    def filter_queryset(self, queryset):
-        from_timestamp = self.request.query_params.get("from")
-        to_timestamp = self.request.query_params.get("to")
-
-        if from_timestamp:
-            try:
-                from_date = datetime.datetime.fromtimestamp(int(from_timestamp))
-                queryset = queryset.filter(opens_at__gte=from_date)
-            except (ValueError, TypeError):
-                pass
-
-        if to_timestamp:
-            try:
-                to_date = datetime.datetime.fromtimestamp(int(to_timestamp))
-                queryset = queryset.filter(opens_at__lte=to_date)
-            except (ValueError, TypeError):
-                pass
-
-        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -75,12 +53,10 @@ class LessonView(RetrieveAPIView):
         return context
 
     def get_object(self):
-        obj = self._get_lesson(self.kwargs["pk"])
+        pk = self.kwargs["pk"]
+        obj = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, obj)
         return obj
-
-    def _get_lesson(self, pk: str) -> UserLesson:
-        return UserLesson.objects.available_for_or_404(pk, self.request.user)
 
 
 class CompleteLessonView(GenericAPIView):
@@ -94,9 +70,8 @@ class CompleteLessonView(GenericAPIView):
         return Response(self.get_serializer(lesson).data)
 
     def get_object(self) -> UserLesson:
-        obj = UserLesson.objects.available_for_or_404(
-            self.kwargs["pk"], self.request.user
-        )
+        pk = self.kwargs["pk"]
+        obj = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -117,9 +92,8 @@ class CompleteLessonTasksView(GenericAPIView):
         return Response(self.get_serializer(lesson).data)
 
     def get_object(self) -> UserLesson:
-        obj = UserLesson.objects.available_for_or_404(
-            self.kwargs["pk"], self.request.user
-        )
+        pk = self.kwargs["pk"]
+        obj = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -140,9 +114,8 @@ class SkipLessonView(GenericAPIView):
         return Response(self.get_serializer(lesson).data)
 
     def get_object(self) -> UserLesson:
-        obj = UserLesson.objects.available_for_or_404(
-            self.kwargs["pk"], self.request.user
-        )
+        pk = self.kwargs["pk"]
+        obj = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -194,9 +167,8 @@ class AnswerLessonTaskView(GenericAPIView):
         return context
 
     def _get_user_lesson_or_fail(self):
-        lesson = UserLesson.objects.available_for_or_404(
-            self.kwargs["pk"], self.request.user
-        )
+        pk = self.kwargs["pk"]
+        lesson = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, lesson)
         return lesson
 
@@ -245,9 +217,8 @@ class SkipLessonTaskView(GenericAPIView):
         return context
 
     def _get_user_lesson_or_fail(self):
-        lesson = UserLesson.objects.available_for_or_404(
-            self.kwargs["pk"], self.request.user
-        )
+        pk = self.kwargs["pk"]
+        lesson = UserLesson.objects.available_for_or_404(pk, self.request.user)
         self.check_object_permissions(self.request, lesson)
         return lesson
 

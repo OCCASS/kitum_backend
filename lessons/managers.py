@@ -12,39 +12,14 @@ User = get_user_model()
 class UserLessonQuerySet(models.QuerySet):
     def all_available_for(self, user: User):
         """Возвращает уроки, которые были куплены пользователем, то есть доступные ему"""
-
-        user_subscription = self._get_active_user_subscription(user)
-        if not user_subscription:
-            return self.none()
-
-        return self.filter(
-            models.Q(opens_at__lte=timezone.now())
-            & models.Q(opens_at__lte=user_subscription.active_before)
-        )
+        return self.filter(opens_at__lte=timezone.now(), user=user)
 
     def available_for(self, pk: str, user: User):
         """Возвращает урок, который были куплен пользователем, то есть доступный ему"""
 
-        user_subscription = self._get_active_user_subscription(user)
-        if not user_subscription:
-            return self.none()
-
         return self.filter(
-            models.Q(lesson__pk=pk)
-            & models.Q(opens_at__lte=timezone.now())
-            & models.Q(opens_at__lte=user_subscription.active_before)
+            lesson__pk=pk, opens_at__lte=timezone.now(), user=user
         ).first()
-
-    def _get_active_user_subscription(self, user: User) -> UserSubscription | None:
-        """Получить текущую подписку пользователя, если ее нет, то возвращается `None`"""
-
-        return (
-            UserSubscription.objects.filter(
-                user=user, active_before__gte=timezone.now()
-            )
-            .select_related("subscription")
-            .first()
-        )
 
 
 class UserLessonManager(models.Manager):
