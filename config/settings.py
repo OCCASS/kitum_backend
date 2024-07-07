@@ -120,6 +120,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
@@ -172,15 +173,15 @@ EMAIL_PORT = env.int("EMAIL_PORT")
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
 
-DEFAULT_WEEK_DAY_1 = 1  # Thuesday
+DEFAULT_WEEK_DAY_1 = 1  # Thursday
 DEFAULT_WEEK_DAY_2 = 4  # Friday
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND")
 
 CELERY_BEAT_SCHEDULE = {
-    "notify_subscribtion_overdue": {
-        "task": "subscriptions.tasks.notify_subscribtion_overdue",
+    "notify_subscription_overdue": {
+        "task": "subscriptions.tasks.notify_subscription_overdue",
         "schedule": 60,
     }
 }

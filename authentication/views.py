@@ -8,16 +8,15 @@ from django.contrib.auth.tokens import (
     PasswordResetTokenGenerator,
     default_token_generator,
 )
-from django.http import Http404
 from django.utils import timezone
-from rest_framework import permissions, serializers
+from rest_framework import permissions
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
+from .tasks import generate_profile_image_for_user_task
 
 from .exceptions import ConfirmMailTokenIsInvalid, PasswordResetRequestAlreadyCreated
 from .models import ConfirmMail, PasswordReset
@@ -29,7 +28,6 @@ from .serializers import (
 )
 
 User = get_user_model()
-TokensDict: TypeAlias = dict[Literal["access", "refresh"], str]
 
 
 class RegistrationView(GenericAPIView):
@@ -39,36 +37,17 @@ class RegistrationView(GenericAPIView):
     def post(self, request: Request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = self._perform_create(serializer)
-        tokens = self._get_user_tokens(user)
+        user = serializer.save()
+        generate_profile_image_for_user_task.delay(user.id)
         self._send_confirmation_mail(user)
-        return self._create_response(tokens, serializer.data)
-
-    def _create_response(self, tokens: TokensDict, data: dict) -> Response:
-        data = self._build_response_data(data, tokens)
-        return Response(data)
-
-    @staticmethod
-    def _perform_create(serializer: UserSerializer) -> User:
-        """Performer model creation from serializer"""
-        return serializer.save()
-
-    @staticmethod
-    def _get_user_tokens(user: User) -> TokensDict:
-        """Get user JWT tokens dict like {'access': '...', 'refresh': '...'}"""
-        token = RefreshToken.for_user(user)
-        return {"access": str(token.access_token), "refresh": str(token)}
-
-    @staticmethod
-    def _build_response_data(user_data: dict, tokens: TokensDict) -> dict:
-        return {"user": user_data, **tokens}
+        return Response(self.get_serializer(user).data)
 
     def _send_confirmation_mail(self, user: User):
         token = default_token_generator.make_token(user)
         ConfirmMail(user=user, token=token).save()
         url = f"{settings.CONFIRM_MAIL_BASE_URL}/?t={token}"
         send_mail(
-            "KITUM – подтверждение почты",
+            "KITUM – подтверждение почты",
             url,
             settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
