@@ -4,5 +4,5 @@ from .models import UserSubscription
 
 
 @shared_task
-def notify_subscribtion_overdue():
+def notify_subscription_overdue():
     pass
