@@ -49,7 +49,7 @@ class LessonEventSerializer(EventSerializer):
         fields = "__all__"
 
     def get_id(self, obj: UserLesson):
-        return obj.id
+        return obj.lesson_id
 
     def get_name(self, obj: UserLesson):
         return obj.title
@@ -73,7 +73,7 @@ class HomeworkEventSerializer(EventSerializer):
         fields = "__all__"
 
     def get_id(self, obj: UserLesson):
-        return obj.id
+        return obj.lesson_id
 
     def get_name(self, obj: UserLesson):
         return obj.title
