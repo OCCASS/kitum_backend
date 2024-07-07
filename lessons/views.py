@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import status
 from rest_framework.generics import (
     GenericAPIView,
@@ -19,6 +21,26 @@ class LessonsView(ListAPIView):
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user)
+
+    def filter_queryset(self, queryset):
+        from_timestamp = self.request.query_params.get("from")
+        to_timestamp = self.request.query_params.get("to")
+
+        if from_timestamp:
+            try:
+                from_date = datetime.datetime.fromtimestamp(int(from_timestamp))
+                queryset = queryset.filter(opens_at__gte=from_date)
+            except (ValueError, TypeError):
+                pass
+
+        if to_timestamp:
+            try:
+                to_date = datetime.datetime.fromtimestamp(int(to_timestamp))
+                queryset = queryset.filter(opens_at__lte=to_date)
+            except (ValueError, TypeError):
+                pass
+
+        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

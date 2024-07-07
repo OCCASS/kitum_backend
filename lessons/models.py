@@ -46,9 +46,6 @@ class Lesson(BaseModel):
     subscription = models.ForeignKey(
         Subscription, on_delete=models.SET_NULL, related_name="lessons", null=True
     )
-    is_required = models.BooleanField(default=True)
-    depends_on = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
-    opens_at = models.DateTimeField()
 
 
 class TaskFile(BaseModel):
@@ -68,7 +65,7 @@ class UserLesson(BaseModel):
     class Meta:
         db_table = "user_lesson"
         ordering = (
-            "is_closed",
+            "opens_at",
             "is_tasks_completed",
             "-is_completed",
             "created_at",
@@ -76,15 +73,19 @@ class UserLesson(BaseModel):
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
-    is_closed = models.BooleanField(default=True)
     is_completed = models.BooleanField(default=False)
     is_skipped = models.BooleanField(default=False)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField(null=False)
     is_tasks_completed = models.BooleanField(default=False)
+    opens_at = models.DateTimeField(null=False)
 
     objects = UserLessonManager()
+
+    @property
+    def is_closed(self):
+        return self.opens_at > timezone.now()
 
     def try_complete(self) -> None:
         if self.is_closed:

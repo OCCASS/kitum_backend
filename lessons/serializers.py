@@ -79,6 +79,7 @@ class UserLessonSerializer(ModelSerializer):
             "created_at",
             "updated_at",
             "complete_tasks_deadline",
+            "opens_at",
         )
 
     def get_id(self, obj: UserLesson) -> str:

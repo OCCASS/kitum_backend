@@ -17,26 +17,10 @@ class UserLessonQuerySet(models.QuerySet):
         if not user_subscription:
             return self.none()
 
-        lessons_subquery = user_subscription.subscription.lessons.filter(
-            opens_at__lte=user_subscription.active_before,
-        ).values("id")
-
-        # Получить откртые уроки у которых зависимый урок (если он есть) тоже открыт,
-        # а также время откртыия урока до окончания подписки
-        lessons_are_open = models.Q(is_closed=False)
-        lessons_within_subscription_period = models.Q(
-            lesson__id__in=models.Subquery(lessons_subquery)
+        return self.filter(
+            models.Q(opens_at__lte=timezone.now())
+            & models.Q(opens_at__lte=user_subscription.active_before)
         )
-        lessons_are_accessible = models.Q(
-            lesson__depends_on__userlesson__is_closed=False,
-            lesson__depends_on__userlesson__is_tasks_completed=True,
-        ) | models.Q(lesson__depends_on__isnull=True)
-        query = (
-            lessons_are_open
-            & lessons_within_subscription_period
-            & lessons_are_accessible
-        )
-        return self.filter(query)
 
     def available_for(self, pk: str, user: User):
         """Возвращает урок, который были куплен пользователем, то есть доступный ему"""
@@ -45,24 +29,11 @@ class UserLessonQuerySet(models.QuerySet):
         if not user_subscription:
             return self.none()
 
-        # Получить откртый урок у которого зависимый урок (если он есть) тоже открыт,
-        # а также время откртия урока до окончания подписки
-        lesson_is_open = models.Q(is_closed=False)
-        lesson_opens_before_subscription_end = models.Q(
-            lesson__opens_at__lte=user_subscription.active_before
-        )
-        lesson_is_accessible = models.Q(
-            lesson__depends_on__userlesson__is_closed=False,
-            lesson__depends_on__userlesson__is_tasks_completed=True,
-        ) | models.Q(lesson__depends_on__isnull=True)
-        lesson_with_pk = models.Q(lesson__pk=pk)
-        query = (
-            lesson_with_pk
-            & lesson_is_open
-            & lesson_opens_before_subscription_end
-            & lesson_is_accessible
-        )
-        return self.filter(query).first()
+        return self.filter(
+            models.Q(lesson__pk=pk)
+            & models.Q(opens_at__lte=timezone.now())
+            & models.Q(opens_at__lte=user_subscription.active_before)
+        ).first()
 
     def _get_active_user_subscription(self, user: User) -> UserSubscription | None:
         """Получить текущую подписку пользователя, если ее нет, то возвращается `None`"""
