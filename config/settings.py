@@ -28,7 +28,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djangorestframework_camel_case",
     "corsheaders",
+    "django_celery_beat",
     # local
+    "config",
     "authentication",
     "lessons",
     "schedule",
@@ -172,3 +174,13 @@ EMAIL_HOST_PASSWORD = "ohfi kosp snny cpcu"
 
 DEFAULT_WEEK_DAY_1 = 1  # Thuesday
 DEFAULT_WEEK_DAY_2 = 4  # Friday
+
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND")
+
+CELERY_BEAT_SCHEDULE = {
+    "notify_subscribtion_overdue": {
+        "task": "subscriptions.tasks.notify_subscribtion_overdue",
+        "schedule": 60,
+    }
+}
