@@ -165,12 +165,12 @@ CONFIRM_MAIL_BASE_URL = env.str("CONFIRM_MAIL_BASE_URL")
 CONFIRM_MAIL_TOKEN_LIFETIME = timedelta(minutes=10)
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
 EMAIL_USE_TLS = False
-EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = "pavlovtimur255@gmail.com"
-EMAIL_HOST_PASSWORD = "ohfi kosp snny cpcu"
+EMAIL_HOST = env.str("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
 
 DEFAULT_WEEK_DAY_1 = 1  # Thuesday
 DEFAULT_WEEK_DAY_2 = 4  # Friday
