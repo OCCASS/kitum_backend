@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
+from schedule.models import UserScheduleConfig
 
 
 class CustomUserManager(BaseUserManager):
@@ -16,6 +17,8 @@ class CustomUserManager(BaseUserManager):
         )
         user.set_password(password)
         user.save()
+
+        self._create_user_schedule_config(user)
         return user
 
     def create_superuser(
@@ -24,4 +27,9 @@ class CustomUserManager(BaseUserManager):
         user = self.create_user(first_name, last_name, email, password, **extra_fields)
         user.is_staff = True
         user.save()
+
+        self._create_user_schedule_config(user)
         return user
+
+    def _create_user_schedule_config(self, user):
+        UserScheduleConfig(user=user).save()
