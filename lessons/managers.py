@@ -3,6 +3,7 @@ from typing import cast
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import Http404
+from django.utils import timezone
 
 User = get_user_model()
 
