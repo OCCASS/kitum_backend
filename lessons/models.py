@@ -2,7 +2,6 @@ from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from subscriptions.models import Subscription
 
 from lessons.managers import UserLessonManager, UserLessonTaskManager
 
@@ -43,9 +42,6 @@ class Lesson(BaseModel):
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
-    subscription = models.ForeignKey(
-        Subscription, on_delete=models.SET_NULL, related_name="lessons", null=True
-    )
 
 
 class TaskFile(BaseModel):
