@@ -19,7 +19,7 @@ def _get_text_dimensions(text_string, font):
 
 
 @shared_task
-def generate_profile_image_for_user_task(user_id: str, size=32):
+def generate_profile_image_for_user_task(user_id: str, size=128):
     user = User.objects.get(id=user_id)
     image = Image.new("RGB", (size, size), color="#c6c6c6")
     draw = ImageDraw.Draw(image)
