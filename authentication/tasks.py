@@ -9,13 +9,14 @@ from PIL import Image, ImageDraw, ImageFont
 User = get_user_model()
 
 
-def _get_text_dimensions(text_string, font):
-    """Получить размеры текста"""
-
-    _, descent = font.getmetrics()
-    text_width = font.getmask(text_string).getbbox()[2]
-    text_height = font.getmask(text_string).getbbox()[3] + descent
-    return text_width, text_height
+def _get_text_position(size: int, text: str, font):
+    left, top, right, bottom = font.getbbox(text)
+    width = right - left
+    left = (size - width) / 2.0
+    # I just don't know why 2.7, but it seems to be the good ratio
+    height = bottom - top
+    top = (size - height) / 2.7
+    return left, top
 
 
 @shared_task
@@ -28,10 +29,9 @@ def generate_profile_image_for_user_task(user_id: str, size=128):
     font = ImageFont.truetype(font_path, size // 2)
 
     initials = f"{user.first_name[0]}{user.last_name[0]}"
-
-    text_width, text_height = _get_text_dimensions(initials, font)
-    position = ((size - text_width) / 2, (size - text_height) / 2)
-    draw.text(position, initials, fill="#ebebeb", font=font)
+    draw.text(
+        _get_text_position(size, initials, font), initials, fill="#ebebeb", font=font
+    )
 
     image_io = BytesIO()
     image.save(image_io, format="PNG")
