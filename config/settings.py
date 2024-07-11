@@ -185,3 +185,16 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60,
     }
 }
+
+PROFILE_IMAGE_COLORS = (
+    {"background": "#8cf66c", "text": "#2c8112"},
+    {"background": "#cc6cf6", "text": "#631281"},
+    {"background": "#6c70f6", "text": "#121481"},
+    {"background": "#f66c6c", "text": "#811212"},
+    {"background": "#f66cee", "text": "#81126d"},
+    {"background": "#f2f66c", "text": "#afb40c"},
+    {"background": "#68eee5", "text": "#108e85"},
+    {"background": "#68eebf", "text": "#11815a"},
+    {"background": "#f5aa65", "text": "#814711"},
+    {"background": "#bcf565", "text": "#538010"},
+)
