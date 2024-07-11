@@ -13,9 +13,9 @@ def _get_text_position(size: int, text: str, font):
     left, top, right, bottom = font.getbbox(text)
     width = right - left
     left = (size - width) / 2.0
-    # I just don't know why 2.7, but it seems to be the good ratio
+    # I just don't know why 2.4, but it seems to be the good ratio
     height = bottom - top
-    top = (size - height) / 2.7
+    top = (size - height) / 2.4
     return left, top
 
 
@@ -26,7 +26,7 @@ def generate_profile_image_for_user_task(user_id: str, size=128):
     draw = ImageDraw.Draw(image)
 
     font_path = settings.STATIC_ROOT / "arial.ttf"
-    font = ImageFont.truetype(font_path, size // 2)
+    font = ImageFont.truetype(font_path, size * 0.4)
 
     initials = f"{user.first_name[0]}{user.last_name[0]}"
     draw.text(
