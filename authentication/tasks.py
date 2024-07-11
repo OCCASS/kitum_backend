@@ -22,7 +22,7 @@ def _get_text_position(size: int, text: str, font):
 @shared_task
 def generate_profile_image_for_user_task(user_id: str, size=128):
     user = User.objects.get(id=user_id)
-    image = Image.new("RGB", (size, size), color="#c6c6c6")
+    image = Image.new("RGB", (size, size), color="#F3F4F6")
     draw = ImageDraw.Draw(image)
 
     font_path = settings.STATIC_ROOT / "arial.ttf"
@@ -30,7 +30,7 @@ def generate_profile_image_for_user_task(user_id: str, size=128):
 
     initials = f"{user.first_name[0]}{user.last_name[0]}"
     draw.text(
-        _get_text_position(size, initials, font), initials, fill="#ebebeb", font=font
+        _get_text_position(size, initials, font), initials, fill="#A7ADB8", font=font
     )
 
     image_io = BytesIO()
