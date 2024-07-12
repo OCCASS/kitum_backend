@@ -21,7 +21,7 @@ class Task(BaseModel):
     class Meta:
         db_table = "task"
         verbose_name = "Задача"
-        verbose_name_prular = "Задачи"
+        verbose_name_plural = "Задачи"
 
     kim_number = models.IntegerField()
     cost = models.IntegerField()
@@ -41,7 +41,7 @@ class Lesson(BaseModel):
     class Meta:
         db_table = "lesson"
         verbose_name = "Урок"
-        verbose_name_prular = "Уроки"
+        verbose_name_plural = "Уроки"
 
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
@@ -71,7 +71,7 @@ class UserLesson(BaseModel):
             "created_at",
         )
         verbose_name = "Урок"
-        verbose_name_prular = "Уроки"
+        verbose_name_plural = "Уроки"
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
@@ -131,7 +131,7 @@ class UserLessonTask(BaseModel):
     class Meta:
         db_table = "user_lesson_task"
         verbose_name = "Задача"
-        verbose_name_prular = "Задачи"
+        verbose_name_plural = "Задачи"
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     lesson = models.ForeignKey(
