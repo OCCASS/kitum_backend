@@ -15,6 +15,8 @@ User = get_user_model()
 class Variant(BaseModel):
     class Meta:
         db_table = "variant"
+        verbose_name = "Вариант"
+        verbose_name_plural = "Варианты"
 
     title = models.CharField(max_length=255, blank=False)
     tasks = models.ManyToManyField(Task)
@@ -27,6 +29,8 @@ class UserVariant(BaseModel):
             "-completed_at",
             "started_at",
         )
+        verbose_name = "Вариант"
+        verbose_name_plural = "Варианты"
 
     variant = models.ForeignKey(Variant, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -62,6 +66,8 @@ class UserVariant(BaseModel):
 class UserVariantTask(BaseModel):
     class Meta:
         db_table = "user_variant_task"
+        verbose_name = "Задача"
+        verbose_name_plural = "Задачи"
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     variant = models.ForeignKey(

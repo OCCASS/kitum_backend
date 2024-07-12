@@ -11,6 +11,8 @@ class Subscription(BaseModel):
 
     class Meta:
         db_table = "subscription"
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
 
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
@@ -21,6 +23,8 @@ class UserSubscription(BaseModel):
 
     class Meta:
         db_table = "user_subscription"
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)

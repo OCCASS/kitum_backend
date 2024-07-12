@@ -1,8 +1,8 @@
-from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+from core.models import BaseModel
 from lessons.managers import UserLessonManager, UserLessonTaskManager
 
 from .exceptions import *
@@ -20,6 +20,8 @@ class Task(BaseModel):
 
     class Meta:
         db_table = "task"
+        verbose_name = "Задача"
+        verbose_name_prular = "Задачи"
 
     kim_number = models.IntegerField()
     cost = models.IntegerField()
@@ -38,6 +40,8 @@ class Lesson(BaseModel):
 
     class Meta:
         db_table = "lesson"
+        verbose_name = "Урок"
+        verbose_name_prular = "Уроки"
 
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
@@ -66,6 +70,8 @@ class UserLesson(BaseModel):
             "-is_completed",
             "created_at",
         )
+        verbose_name = "Урок"
+        verbose_name_prular = "Уроки"
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
@@ -124,6 +130,8 @@ class UserLessonTask(BaseModel):
 
     class Meta:
         db_table = "user_lesson_task"
+        verbose_name = "Задача"
+        verbose_name_prular = "Задачи"
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     lesson = models.ForeignKey(

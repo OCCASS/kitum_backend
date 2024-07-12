@@ -21,6 +21,8 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
 
     class Meta:
         db_table = "user"
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
     first_name = models.CharField(max_length=120, null=False)
     last_name = models.CharField(max_length=120, null=False)
