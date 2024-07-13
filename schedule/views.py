@@ -1,10 +1,11 @@
 import datetime
 
 from django.utils import timezone
-from lessons.models import UserLesson
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from lessons.models import UserLesson
 
 from .serializers import *
 
@@ -26,7 +27,7 @@ class ScheduleListView(GenericAPIView):
 
     def get_lessons(self):
         from_date, to_date = self.get_from_date(), self.get_to_date()
-        queryset = UserLesson.objects.all()
+        queryset = UserLesson.objects.filter(user=self.request.user)
         if from_date:
             queryset = queryset.filter(opens_at__gte=from_date)
         if to_date:
