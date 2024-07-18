@@ -3,8 +3,8 @@ from django.utils import timezone
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import Response
-
 from services.payment import create_payment
+
 from subscriptions.models import Subscription, SubscriptionOrder, UserSubscription
 from subscriptions.serializers import (
     OrderSubscriptionSerializer,
@@ -19,7 +19,11 @@ class UnpurchasedSubscriptionsList(ListAPIView):
     serializer_class = SubscriptionSerializer
 
     def filter_queryset(self, queryset: models.QuerySet):
-        return queryset.exclude(usersubscription__user=self.request.user)
+        # return queryset.exclude(usersubscription__user=self.request.user)
+        user_subscriptions = UserSubscription.objects.filter(
+            user=self.request.user
+        ).values_list("subscription_id", flat=True)
+        return queryset.exclude(id__in=user_subscriptions)
 
 
 class OrderSubscription(GenericAPIView):

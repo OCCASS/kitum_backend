@@ -6,9 +6,9 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-
 from lessons.models import Lesson, UserLesson, UserLessonTask
-from .models import SubscriptionOrder, UserSubscription, Subscription
+
+from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
 
@@ -23,9 +23,11 @@ def payment_webhook(request, *args, **kwargs):
 
     data = json.loads(request.body)
     if data.get("event") == PAYMENT_SUCCEEDED_EVENT:
-        subscription_order = SubscriptionOrder.objects.get(payment_id=data["object"]["id"])
+        subscription_order = SubscriptionOrder.objects.get(
+            payment_id=data["object"]["id"]
+        )
         user, subscription = subscription_order.user, subscription_order.subscription
-        if is_user_have_active_subscription(user):
+        if is_user_have_active_subscription(subscription, user):
             return HttpResponse(status=200)
 
         renew_or_create_user_subscription(subscription, user)
@@ -34,8 +36,10 @@ def payment_webhook(request, *args, **kwargs):
     return HttpResponse(status=200)
 
 
-def is_user_have_active_subscription(user: User) -> bool:
-    return UserSubscription.objects.filter(usersubscription__user=user).exists()
+def is_user_have_active_subscription(subscription, user: User) -> bool:
+    return UserSubscription.objects.filter(
+        user=user, active_before__gte=timezone.now(), subscription=subscription
+    ).exists()
 
 
 def renew_or_create_user_subscription(subscription: Subscription, user: User):
@@ -43,9 +47,7 @@ def renew_or_create_user_subscription(subscription: Subscription, user: User):
 
     try:
         active_user_subscription = UserSubscription.objects.get(
-            subscription=subscription,
-            user=user,
-            active_before__lte=timezone.now()
+            subscription=subscription, user=user, active_before__lte=timezone.now()
         )
         renew_user_subscription(active_user_subscription)
     except ObjectDoesNotExist:
@@ -57,13 +59,20 @@ def new_user_subscription(subscription: Subscription, user: User) -> None:
 
     now = timezone.now()
     active_before = now.replace(month=(now.month + 1) % 12)
-    UserSubscription(subscription=subscription, user=user, purchased_at=now, active_before=active_before).save()
+    UserSubscription(
+        subscription=subscription,
+        user=user,
+        purchased_at=now,
+        active_before=active_before,
+    ).save()
 
 
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
     """Продлевает подписку пользователя еще на 1 месяц"""
 
-    active_before = user_subscription.active_before.replace(month=(user_subscription.active_before.month + 1) % 12)
+    active_before = user_subscription.active_before.replace(
+        month=(user_subscription.active_before.month + 1) % 12
+    )
     user_subscription.active_before = active_before
     user_subscription.purchased_at = timezone.now()
     user_subscription.save()
@@ -73,10 +82,17 @@ def create_user_lessons(subscription: Subscription, user: User) -> None:
     """Создать уроки пользователя на купленный месяц, в следствии покупки подписки"""
 
     current_month = timezone.now().month
-    lessons = Lesson.objects. \
-        filter(subscriptions__id=subscription.id, created_at__month=current_month). \
-        order_by("created_at"). \
-        prefetch_related("subscriptions", "tasks")
+    exists_lessons = UserLesson.objects.filter(user=user).values_list(
+        "lesson_id", flat=True
+    )
+    lessons = (
+        Lesson.objects.filter(
+            subscriptions__id=subscription.id, created_at__month=current_month
+        )
+        .exclude(id__in=exists_lessons)
+        .order_by("created_at")
+        .prefetch_related("subscriptions", "tasks")
+    )
 
     user_lessons = []
     for lesson in lessons:
