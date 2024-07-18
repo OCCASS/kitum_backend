@@ -3,9 +3,9 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
-from lessons.managers import UserLessonManager, UserLessonTaskManager
-
+from subscriptions.models import Subscription
 from .exceptions import *
+from .managers import UserLessonManager, UserLessonTaskManager
 
 User = get_user_model()
 
@@ -46,6 +46,7 @@ class Lesson(BaseModel):
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
+    subscriptions = models.ManyToManyField(Subscription)
 
 
 class TaskFile(BaseModel):
@@ -79,7 +80,7 @@ class UserLesson(BaseModel):
     is_skipped = models.BooleanField(default=False)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
-    complete_tasks_deadline = models.DateTimeField(null=False)
+    complete_tasks_deadline = models.DateTimeField(null=True)
     is_tasks_completed = models.BooleanField(default=False)
     opens_at = models.DateTimeField(null=False)
 

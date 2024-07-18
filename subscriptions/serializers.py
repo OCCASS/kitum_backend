@@ -1,6 +1,6 @@
-from rest_framework.serializers import CharField, ModelSerializer
+from rest_framework.serializers import CharField, ModelSerializer, Serializer
 
-from subscriptions.models import UserSubscription
+from subscriptions.models import Subscription, UserSubscription
 
 
 class UserSubscriptionSerializer(ModelSerializer):
@@ -17,3 +17,14 @@ class UserSubscriptionSerializer(ModelSerializer):
             "price",
             "active_before",
         )
+
+
+class SubscriptionSerializer(ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ("id", "title", "price")
+
+
+class OrderSubscriptionSerializer(Serializer):
+    return_url = CharField(required=True)
+    description = CharField(required=True)
