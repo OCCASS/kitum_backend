@@ -16,19 +16,24 @@ User = get_user_model()
 def payment_webhook(request, *args, **kwargs):
     """Webhook оплаты подписки"""
 
-    # TODO: check double subscription buy
     # TODO: check double lessons create
     # TODO: add prev month subscription order
 
     data = json.loads(request.body)
-    print(data["event"])
     if data["event"] == "payment.succeeded":
         subscription_order = SubscriptionOrder.objects.get(payment_id=data["object"]["id"])
         user, subscription = subscription_order.user, subscription_order.subscription
+        if is_user_have_active_subscription(user):
+            return HttpResponse(status=200)
+
         renew_or_create_user_subscription(subscription, user)
         create_user_lessons(subscription, user)
 
     return HttpResponse(status=200)
+
+
+def is_user_have_active_subscription(user: User) -> bool:
+    return UserSubscription.objects.filter(usersubscription__user=user).exists()
 
 
 def renew_or_create_user_subscription(subscription: Subscription, user: User):
