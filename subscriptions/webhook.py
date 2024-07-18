@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +17,6 @@ User = get_user_model()
 def payment_webhook(request, *args, **kwargs):
     """Webhook оплаты подписки"""
 
-    # TODO: check double lessons create
     # TODO: add prev month subscription order
 
     data = json.loads(request.body)
@@ -74,12 +74,21 @@ def create_user_lessons(subscription: Subscription, user: User) -> None:
     lessons = Lesson.objects. \
         filter(subscriptions__id=subscription.id, created_at__month=current_month). \
         order_by("created_at"). \
-        prefetch_related("subscriptions"). \
-        prefetch_related("tasks")
+        prefetch_related("subscriptions", "tasks")
 
-    # TODO: add bulk create
+    user_lessons = []
     for lesson in lessons:
         user_lesson = UserLesson(lesson=lesson, user=user, opens_at=timezone.now())
-        user_lesson.save()
-        for task in lesson.tasks.all():
-            UserLessonTask(lesson=user_lesson, task=task).save()
+        user_lessons.append(user_lesson)
+
+    with transaction.atomic():
+        created_user_lessons = UserLesson.objects.bulk_create(user_lessons)
+        lesson_to_user_lesson = {ul.lesson_id: ul for ul in created_user_lessons}
+
+        user_lesson_tasks = []
+        for lesson in lessons:
+            user_lesson = lesson_to_user_lesson[lesson.id]
+            for task in lesson.tasks.all():
+                user_lesson_tasks.append(UserLessonTask(lesson=user_lesson, task=task))
+
+        UserLessonTask.objects.bulk_create(user_lesson_tasks)
