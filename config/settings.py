@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from yookassa import Configuration
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -199,3 +200,6 @@ PROFILE_IMAGE_COLORS = (
     {"background": "#f5aa65", "text": "#814711"},
     {"background": "#bcf565", "text": "#538010"},
 )
+
+Configuration.account_id = env.int("YOOKASSA_ACCOUNT_ID")
+Configuration.secret_key = env.str("YOOKASSA_SECRET_KEY")
