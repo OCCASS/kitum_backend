@@ -12,6 +12,8 @@ from .models import SubscriptionOrder, UserSubscription, Subscription
 
 User = get_user_model()
 
+PAYMENT_SUCCEEDED_EVENT = "payment.succeeded"
+
 
 @csrf_exempt
 def payment_webhook(request, *args, **kwargs):
@@ -20,7 +22,7 @@ def payment_webhook(request, *args, **kwargs):
     # TODO: add prev month subscription order
 
     data = json.loads(request.body)
-    if data["event"] == "payment.succeeded":
+    if data.get("event") == PAYMENT_SUCCEEDED_EVENT:
         subscription_order = SubscriptionOrder.objects.get(payment_id=data["object"]["id"])
         user, subscription = subscription_order.user, subscription_order.subscription
         if is_user_have_active_subscription(user):
