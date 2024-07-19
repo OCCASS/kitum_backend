@@ -3,6 +3,7 @@ from pathlib import Path
 
 import environ
 from yookassa import Configuration
+from yookassa.domain.common.user_agent import Version
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -200,5 +201,6 @@ PROFILE_IMAGE_COLORS = (
     {"background": "#bcf565", "text": "#538010"},
 )
 
+Configuration.configure_user_agent(framework=Version("Django", "5.0.6"))
 Configuration.account_id = env.int("YOOKASSA_ACCOUNT_ID")
 Configuration.secret_key = env.str("YOOKASSA_SECRET_KEY")
