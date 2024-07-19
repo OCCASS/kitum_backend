@@ -1,9 +1,10 @@
+from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
-from core.models import BaseModel
 from subscriptions.models import Subscription
+
 from .exceptions import *
 from .managers import UserLessonManager, UserLessonTaskManager
 
@@ -80,7 +81,7 @@ class UserLesson(BaseModel):
     is_skipped = models.BooleanField(default=False)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
-    complete_tasks_deadline = models.DateTimeField(null=True)
+    complete_tasks_deadline = models.DateTimeField(null=False)
     is_tasks_completed = models.BooleanField(default=False)
     opens_at = models.DateTimeField(null=False)
 

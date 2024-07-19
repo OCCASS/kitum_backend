@@ -110,7 +110,12 @@ def create_user_lessons(subscription: Subscription, user: User) -> None:
 
     user_lessons = []
     for lesson in lessons:
-        user_lesson = UserLesson(lesson=lesson, user=user, opens_at=timezone.now())
+        user_lesson = UserLesson(
+            lesson=lesson,
+            user=user,
+            opens_at=timezone.now(),
+            complete_tasks_deadline=timezone.now(),
+        )
         user_lessons.append(user_lesson)
 
     with transaction.atomic():
