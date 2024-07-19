@@ -6,13 +6,14 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from lessons.models import Lesson, UserLesson, UserLessonTask
+from ipware import get_client_ip
+from yookassa.domain.common import SecurityHelper
+from yookassa.domain.notification import WebhookNotificationFactory, WebhookNotificationEventType
 
+from lessons.models import Lesson, UserLesson, UserLessonTask
 from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
-
-PAYMENT_SUCCEEDED_EVENT = "payment.succeeded"
 
 
 @csrf_exempt
@@ -20,11 +21,15 @@ def payment_webhook(request, *args, **kwargs):
     """Webhook оплаты подписки"""
 
     # TODO: add prev month subscription order
+    ip, _ = get_client_ip(request)
+    if not SecurityHelper().is_ip_trusted(ip):
+        return HttpResponse(status=400)
 
     data = json.loads(request.body)
-    if data.get("event") == PAYMENT_SUCCEEDED_EVENT:
+    notification = WebhookNotificationFactory().create(data)
+    if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
         subscription_order = SubscriptionOrder.objects.get(
-            payment_id=data["object"]["id"]
+            payment_id=notification.object.payment_id
         )
         user, subscription = subscription_order.user, subscription_order.subscription
         if is_user_have_active_subscription(subscription, user):
@@ -33,7 +38,7 @@ def payment_webhook(request, *args, **kwargs):
         renew_or_create_user_subscription(subscription, user)
         create_user_lessons(subscription, user)
 
-    return HttpResponse(status=200)
+        return HttpResponse(status=200)
 
 
 def is_user_have_active_subscription(subscription, user: User) -> bool:
