@@ -7,10 +7,13 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from ipware import get_client_ip
-from yookassa.domain.common import SecurityHelper
-from yookassa.domain.notification import WebhookNotificationFactory, WebhookNotificationEventType
-
 from lessons.models import Lesson, UserLesson, UserLessonTask
+from yookassa.domain.common import SecurityHelper
+from yookassa.domain.notification import (
+    WebhookNotificationEventType,
+    WebhookNotificationFactory,
+)
+
 from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
@@ -30,9 +33,12 @@ def payment_webhook(request, *args, **kwargs):
         notification = WebhookNotificationFactory().create(data)
         if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             subscription_order = SubscriptionOrder.objects.get(
-                payment_id=notification.object.payment_id
+                payment_id=notification.object.id
             )
-            user, subscription = subscription_order.user, subscription_order.subscription
+            user, subscription = (
+                subscription_order.user,
+                subscription_order.subscription,
+            )
             if is_user_have_active_subscription(subscription, user):
                 return HttpResponse(status=200)
 
@@ -40,7 +46,7 @@ def payment_webhook(request, *args, **kwargs):
             create_user_lessons(subscription, user)
 
             return HttpResponse(status=200)
-    except Exception:
+    except Exception as e:
         return HttpResponse(status=400)
 
 
