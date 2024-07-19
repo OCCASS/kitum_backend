@@ -26,19 +26,22 @@ def payment_webhook(request, *args, **kwargs):
         return HttpResponse(status=400)
 
     data = json.loads(request.body)
-    notification = WebhookNotificationFactory().create(data)
-    if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
-        subscription_order = SubscriptionOrder.objects.get(
-            payment_id=notification.object.payment_id
-        )
-        user, subscription = subscription_order.user, subscription_order.subscription
-        if is_user_have_active_subscription(subscription, user):
+    try:
+        notification = WebhookNotificationFactory().create(data)
+        if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
+            subscription_order = SubscriptionOrder.objects.get(
+                payment_id=notification.object.payment_id
+            )
+            user, subscription = subscription_order.user, subscription_order.subscription
+            if is_user_have_active_subscription(subscription, user):
+                return HttpResponse(status=200)
+
+            renew_or_create_user_subscription(subscription, user)
+            create_user_lessons(subscription, user)
+
             return HttpResponse(status=200)
-
-        renew_or_create_user_subscription(subscription, user)
-        create_user_lessons(subscription, user)
-
-        return HttpResponse(status=200)
+    except Exception:
+        return HttpResponse(status=400)
 
 
 def is_user_have_active_subscription(subscription, user: User) -> bool:
