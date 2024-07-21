@@ -1,7 +1,5 @@
 import random
-from sys import set_coroutine_origin_tracking_depth
 
-from django.db.models import Min
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import Response
@@ -188,12 +186,18 @@ class GenerateVariantView(GenericAPIView):
         sorted_tasks = Task.objects.all().order_by("kim_number")
         min_kim_number = sorted_tasks.first().kim_number
         max_kim_number = sorted_tasks.last().kim_number
+
+        tasks_by_kim_number = {}
+        for task in sorted_tasks:
+            tasks_by_kim_number.setdefault(task.kim_number, []).append(task)
+
+        tasks = []
         for n in range(min_kim_number, max_kim_number + 1):
-            ids = Task.objects.filter(kim_number=n, complexity=complexity).values_list("id")
-            if ids:
-                task = Task.objects.get(pk=random.choice(ids)[0])
-                user_task = UserVariantTask(task=task)
-                user_task.save()
-                variant.tasks.add(user_task)
+            if n in tasks_by_kim_number:
+                task = random.choice(tasks_by_kim_number[n])
+                tasks.append(UserVariantTask(task=task))
+
+        UserVariantTask.objects.bulk_create(tasks)
+        variant.tasks.add(*tasks)
         variant.save()
         return variant

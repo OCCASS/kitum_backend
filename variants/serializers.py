@@ -126,8 +126,19 @@ class GenerateVariantSerializer(Serializer):
 
 
 class GeneratedVariantSerializer(ModelSerializer):
-    tasks = UserVariantTaskSerializer(many=True, read_only=True)
+    tasks = SerializerMethodField()
 
     class Meta:
         model = GeneratedUserVariant
         fields = "__all__"
+
+    def get_tasks(self, obj: UserVariant):
+        tasks = (
+            obj.tasks.prefetch_related("task", "task__files")
+            .all()
+            .order_by("task__kim_number")
+        )
+        serializer = UserVariantTaskSerializer(
+            tasks, many=True, read_only=True, context=self.context
+        )
+        return serializer.data
