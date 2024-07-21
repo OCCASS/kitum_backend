@@ -1,8 +1,9 @@
-from core.models import BaseModel
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from core.models import BaseModel
 from subscriptions.models import Subscription
 
 from .exceptions import *
@@ -28,6 +29,9 @@ class Task(BaseModel):
     cost = models.IntegerField()
     content = models.TextField()
     correct_answer = models.JSONField(null=False)
+    complexity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(3)]
+    )
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=ANY)
 
     def save(self, *args, **kwargs):

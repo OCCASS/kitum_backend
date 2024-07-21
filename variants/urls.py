@@ -17,4 +17,5 @@ urlpatterns = [
         SkipVariantTaskView.as_view(),
         name="task_skip",
     ),
+    path("generate/", GenerateVariant.as_view(), "variant_generate"),
 ]

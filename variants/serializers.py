@@ -1,4 +1,7 @@
+from rest_framework.fields import MaxValueValidator, MinValueValidator
 from rest_framework.serializers import (
+    CharField,
+    IntegerField,
     JSONField,
     ModelSerializer,
     Serializer,
@@ -6,6 +9,7 @@ from rest_framework.serializers import (
 )
 
 from lessons.serializers import TaskFileSerializer
+
 from .models import *
 
 
@@ -116,3 +120,8 @@ class UserVariantWithoutTasksSerializer(UserVariantSerializer):
 
 class AnswerTaskSerializer(Serializer):
     answer = JSONField(required=True)
+
+
+class GenerateVariantSerializer(Serializer):
+    name = CharField(required=True)
+    complexity = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
