@@ -1,4 +1,3 @@
-from rest_framework.fields import MaxValueValidator, MinValueValidator
 from rest_framework.serializers import (
     CharField,
     IntegerField,
@@ -9,7 +8,6 @@ from rest_framework.serializers import (
 )
 
 from lessons.serializers import TaskFileSerializer
-
 from .models import *
 
 
@@ -125,3 +123,11 @@ class AnswerTaskSerializer(Serializer):
 class GenerateVariantSerializer(Serializer):
     name = CharField(required=True)
     complexity = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+
+
+class GeneratedVariantSerializer(ModelSerializer):
+    tasks = UserVariantTaskSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = GeneratedUserVariant
+        fields = "__all__"

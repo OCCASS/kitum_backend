@@ -1,3 +1,7 @@
+import random
+from sys import set_coroutine_origin_tracking_depth
+
+from django.db.models import Min
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import Response
@@ -120,7 +124,7 @@ class AnswerVariantTaskView(GenericAPIView):
             raise VariantCompleted
 
     def _get_user_variant_task_or_fail(self, variant: UserVariant):
-        return get_object_or_404(variant.tasks, pk=self.kwargs["pk"])
+        return get_object_or_404(variant.tasks, pk=self.kwargs["task_pk"])
 
     def _try_to_answer_task(self, task: UserVariantTask):
         answer_data = self._get_answer_data()
@@ -140,7 +144,7 @@ class SkipVariantTaskView(GenericAPIView):
         variant = self._get_user_variant_or_fail()
         self._validate_started_and_not_completed(variant)
 
-        task = self._get_user_variant_task_or_fail()
+        task = self._get_user_variant_task_or_fail(variant)
         task.try_skip()
 
         serialized_variant = self.get_serializer(variant)
@@ -162,19 +166,34 @@ class SkipVariantTaskView(GenericAPIView):
         if variant.is_completed:
             raise VariantCompleted
 
-    def _get_user_variant_task_or_fail(self):
-        return get_object_or_404(
-            UserVariantTask,
-            variant__variant__pk=self.kwargs["pk"],
-            task__pk=self.kwargs["task_pk"],
-            variant__user=self.request.user,
-        )
+    def _get_user_variant_task_or_fail(self, variant: UserVariant):
+        return get_object_or_404(variant.tasks, pk=self.kwargs["task_pk"])
 
 
-class GenerateVariant(GenericAPIView):
+class GenerateVariantView(GenericAPIView):
     serializer_class = GenerateVariantSerializer
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer()
-        serializer.validate(raise_exception=True)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        variant = self._generate_variant(serializer.data["name"], serializer.data["complexity"])
+        return Response(GeneratedVariantSerializer(variant).data, status=200)
+
+    def _generate_variant(self, name: str, complexity: int):
+        variant = GeneratedUserVariant(
+            title=name, user=self.request.user, complexity=complexity
+        )
+        variant.save()
+        sorted_tasks = Task.objects.all().order_by("kim_number")
+        min_kim_number = sorted_tasks.first().kim_number
+        max_kim_number = sorted_tasks.last().kim_number
+        for n in range(min_kim_number, max_kim_number + 1):
+            ids = Task.objects.filter(kim_number=n, complexity=complexity).values_list("id")
+            if ids:
+                task = Task.objects.get(pk=random.choice(ids)[0])
+                user_task = UserVariantTask(task=task)
+                user_task.save()
+                variant.tasks.add(user_task)
+        variant.save()
+        return variant
