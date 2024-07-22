@@ -201,3 +201,12 @@ class GenerateVariantView(GenericAPIView):
         variant.tasks.add(*tasks)
         variant.save()
         return variant
+
+
+class GeneratedVariantList(ListAPIView):
+    queryset = GeneratedUserVariant.objects.all()
+    serializer_class = GeneratedVariantSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def filter_queryset(self, queryset):
+        return queryset.filter(user=self.request.user)
