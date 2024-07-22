@@ -69,6 +69,7 @@ class UserVariantSerializer(ModelSerializer):
             "is_completed",
             "is_started",
             "created_at",
+            "status"
         )
 
     def to_representation(self, instance):

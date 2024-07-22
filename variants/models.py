@@ -28,6 +28,11 @@ class Variant(BaseModel):
 
 
 class UserVariant(BaseModel):
+    NOT_STARTED = "not_started"
+    STARTED = "started"
+    COMPLETED = "completed"
+    STATUS_CHOICES = {NOT_STARTED: NOT_STARTED, STARTED: STARTED, COMPLETED: COMPLETED}
+
     class Meta:
         db_table = "user_variant"
         ordering = (
@@ -39,6 +44,7 @@ class UserVariant(BaseModel):
 
     title = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     tasks = models.ManyToManyField("UserVariantTask")
@@ -54,6 +60,7 @@ class UserVariant(BaseModel):
             raise VariantAlreadyStarted
 
         self.started_at = timezone.now()
+        self.status = self.STARTED
         self.save()
 
     @property
@@ -65,6 +72,7 @@ class UserVariant(BaseModel):
             raise VariantAlreadyCompleted
 
         self.completed_at = timezone.now()
+        self.status = self.COMPLETED
         self.tasks.filter(answer=None).update(is_skipped=True)
         self.save()
 
