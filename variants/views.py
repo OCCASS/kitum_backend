@@ -34,8 +34,8 @@ class VariantView(RetrieveAPIView):
     def get_object(self):
         obj = get_object_or_404(
             UserVariant,
-            variant__pk=self.kwargs["pk"],
-            user=self.request.user,
+            pk=self.kwargs["pk"],
+            user=self.request.user
         )
         self.check_object_permissions(self.request, obj)
         return obj
@@ -58,7 +58,7 @@ class StartVariantView(GenericAPIView):
 
     def get_object(self) -> UserVariant:
         variant = get_object_or_404(
-            UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
         )
         self.check_object_permissions(self.request, variant)
         return variant
@@ -75,7 +75,7 @@ class CompleteVariantView(GenericAPIView):
 
     def get_object(self) -> UserVariant:
         obj = get_object_or_404(
-            UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
         )
         self.check_object_permissions(self.request, obj)
         return obj
@@ -112,7 +112,7 @@ class AnswerVariantTaskView(GenericAPIView):
 
     def _get_user_variant_or_fail(self):
         return get_object_or_404(
-            UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
         )
 
     def _validate_started_and_not_completed(self, variant: UserVariant):
@@ -155,7 +155,7 @@ class SkipVariantTaskView(GenericAPIView):
 
     def _get_user_variant_or_fail(self):
         return get_object_or_404(
-            UserVariant, variant__pk=self.kwargs["pk"], user=self.request.user
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
         )
 
     def _validate_started_and_not_completed(self, variant: UserVariant):
@@ -176,11 +176,12 @@ class GenerateVariantView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         variant = self._generate_variant(serializer.data["name"], serializer.data["complexity"])
-        return Response(GeneratedVariantSerializer(variant).data, status=200)
+        return Response(UserVariantSerializer(variant).data, status=200)
 
     def _generate_variant(self, name: str, complexity: int):
-        variant = GeneratedUserVariant(
-            title=name, user=self.request.user, complexity=complexity
+        variant = UserVariant(
+            title=name, user=self.request.user, complexity=complexity,
+            generated=True
         )
         variant.save()
         sorted_tasks = Task.objects.all().order_by("kim_number")
@@ -204,9 +205,9 @@ class GenerateVariantView(GenericAPIView):
 
 
 class GeneratedVariantList(ListAPIView):
-    queryset = GeneratedUserVariant.objects.all()
-    serializer_class = GeneratedVariantSerializer
+    queryset = UserVariant.objects.all()
+    serializer_class = UserVariantSerializer
     permission_classes = (IsAuthenticated,)
 
     def filter_queryset(self, queryset):
-        return queryset.filter(user=self.request.user)
+        return queryset.filter(user=self.request.user, generated=True)

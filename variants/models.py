@@ -37,11 +37,15 @@ class UserVariant(BaseModel):
         verbose_name = "Вариант"
         verbose_name_plural = "Варианты"
 
-    variant = models.ForeignKey(Variant, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     tasks = models.ManyToManyField("UserVariantTask")
+    generated = models.BooleanField(default=False)
+    complexity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(3)]
+    )
 
     objects = UserVariantManager()
 
@@ -94,18 +98,3 @@ class UserVariantTask(BaseModel):
         self.is_skipped = True
         self.save()
 
-
-class GeneratedUserVariant(BaseModel):
-    class Meta:
-        db_table = "generated_user_variant"
-        verbose_name = "Сгенерированный вариант"
-        verbose_name_plural = "Сгенерированные варианты"
-
-    title = models.CharField(max_length=255)
-    complexity = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(3)]
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    tasks = models.ManyToManyField(UserVariantTask)
-    started_at = models.DateTimeField(null=True)
-    completed_at = models.DateTimeField(null=True)

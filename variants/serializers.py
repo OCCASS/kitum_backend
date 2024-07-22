@@ -56,8 +56,6 @@ class UserVariantTaskSerializer(ModelSerializer):
 
 
 class UserVariantSerializer(ModelSerializer):
-    id = SerializerMethodField()
-    title = SerializerMethodField()
     tasks = SerializerMethodField()
 
     class Meta:
@@ -92,12 +90,6 @@ class UserVariantSerializer(ModelSerializer):
             tasks[i]["is_correct"] = None
         return tasks
 
-    def get_id(self, obj: UserVariant) -> str:
-        return obj.variant.id
-
-    def get_title(self, obj: UserVariant) -> str:
-        return obj.variant.title
-
     def get_tasks(self, obj: UserVariant):
         tasks = (
             obj.tasks.prefetch_related("task", "task__files")
@@ -124,21 +116,3 @@ class GenerateVariantSerializer(Serializer):
     name = CharField(required=True)
     complexity = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
 
-
-class GeneratedVariantSerializer(ModelSerializer):
-    tasks = SerializerMethodField()
-
-    class Meta:
-        model = GeneratedUserVariant
-        fields = "__all__"
-
-    def get_tasks(self, obj: UserVariant):
-        tasks = (
-            obj.tasks.prefetch_related("task", "task__files")
-            .all()
-            .order_by("task__kim_number")
-        )
-        serializer = UserVariantTaskSerializer(
-            tasks, many=True, read_only=True, context=self.context
-        )
-        return serializer.data
