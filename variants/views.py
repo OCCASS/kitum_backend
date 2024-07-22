@@ -18,6 +18,14 @@ class VariantsView(ListAPIView):
     serializer_class = UserVariantWithoutTasksSerializer
     permission_classes = (IsAuthenticated,)
 
+    def filter_queryset(self, queryset):
+        generated = self.request.query_params.get("generated")
+        queryset = queryset.filter(user=self.request.user)
+        if generated is None:
+            return queryset
+        else:
+            return queryset.filter(generated=generated == "true")
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
@@ -202,12 +210,3 @@ class GenerateVariantView(GenericAPIView):
         variant.tasks.add(*tasks)
         variant.save()
         return variant
-
-
-class GeneratedVariantList(ListAPIView):
-    queryset = UserVariant.objects.all()
-    serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def filter_queryset(self, queryset):
-        return queryset.filter(user=self.request.user, generated=True)
