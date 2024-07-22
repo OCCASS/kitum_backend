@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
-    validate_integer,
 )
 from django.db import models
 from django.utils import timezone
@@ -10,7 +9,6 @@ from django.utils import timezone
 from core.models import BaseModel
 from lessons.exceptions import TaskAlreadyAnswered, TaskAlreadySkipped
 from lessons.models import Task
-
 from .exceptions import VariantAlreadyCompleted, VariantAlreadyStarted
 from .managers import UserVariantManager
 
@@ -63,10 +61,6 @@ class UserVariant(BaseModel):
         self.status = self.STARTED
         self.save()
 
-    @property
-    def is_started(self):
-        return bool(self.started_at)
-
     def complete(self):
         if self.completed_at:
             raise VariantAlreadyCompleted
@@ -77,8 +71,12 @@ class UserVariant(BaseModel):
         self.save()
 
     @property
+    def is_started(self):
+        return self.status == self.STARTED
+
+    @property
     def is_completed(self):
-        return bool(self.completed_at)
+        return self.status == self.COMPLETED
 
 
 class UserVariantTask(BaseModel):
@@ -105,4 +103,3 @@ class UserVariantTask(BaseModel):
 
         self.is_skipped = True
         self.save()
-

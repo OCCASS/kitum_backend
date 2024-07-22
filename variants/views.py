@@ -19,12 +19,17 @@ class VariantsView(ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def filter_queryset(self, queryset):
-        generated = self.request.query_params.get("generated")
         queryset = queryset.filter(user=self.request.user)
-        if generated is None:
-            return queryset
-        else:
-            return queryset.filter(generated=generated == "true")
+
+        generated = self.request.query_params.get("generated")
+        if generated is not None:
+            queryset = queryset.filter(generated=generated == "true")
+        status = self.request.query_params.get("status")
+        if status is not None:
+            queryset = queryset.filter(status=status)
+
+        return queryset
+
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
