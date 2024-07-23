@@ -25,6 +25,17 @@ class Variant(BaseModel):
     tasks = models.ManyToManyField(Task)
 
 
+class VariantScoreTable(models.Model):
+    class Meta:
+        db_table = "variant_score_table"
+        verbose_name = "Таблица первичных и вторичных баллов"
+        verbose_name_plural = "Таблицы первичных и вторичных баллов"
+
+    id = models.AutoField(primary_key=True)
+    primary = models.IntegerField()
+    secondary = models.IntegerField()
+
+
 class UserVariant(BaseModel):
     NOT_STARTED = "not_started"
     STARTED = "started"
@@ -50,6 +61,7 @@ class UserVariant(BaseModel):
     complexity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(3)]
     )
+    result = models.IntegerField(default=None, null=True)
 
     objects = UserVariantManager()
 
@@ -68,6 +80,7 @@ class UserVariant(BaseModel):
         self.completed_at = timezone.now()
         self.status = self.COMPLETED
         self.tasks.filter(answer=None).update(is_skipped=True)
+        self.result = self._get_result()
         self.save()
 
     @property
@@ -77,6 +90,15 @@ class UserVariant(BaseModel):
     @property
     def is_completed(self):
         return self.status == self.COMPLETED
+
+    def _get_result(self) -> int:
+        try:
+            total_primary_score = self.tasks. \
+                filter(is_correct=True). \
+                aggregate(total_cost=models.Sum("cost"))["total_cost"]
+            return VariantScoreTable.objects.get(primary=total_primary_score).secondary
+        except models.ObjectDoesNotExist:
+            return 0
 
 
 class UserVariantTask(BaseModel):
