@@ -5,7 +5,7 @@ from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .exceptions import VariantCompleted, VariantNotStarted
+from .exceptions import VariantCompleted, VariantNotStarted, VariantNotIncludesTask
 from .serializers import *
 
 User = get_user_model()
@@ -134,7 +134,11 @@ class AnswerVariantTaskView(GenericAPIView):
             raise VariantCompleted
 
     def _get_user_variant_task_or_fail(self, variant: UserVariant):
-        return get_object_or_404(variant.tasks, pk=self.kwargs["task_pk"])
+        task_id = self.kwargs["task_pk"]
+        if not variant.tasks.filter(pk=task_id).exists():
+            raise VariantNotIncludesTask
+
+        return get_object_or_404(UserTask, pk=task_id)
 
     def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
@@ -166,9 +170,7 @@ class SkipVariantTaskView(GenericAPIView):
         return context
 
     def _get_user_variant_or_fail(self):
-        return get_object_or_404(
-            UserVariant, pk=self.kwargs["pk"], user=self.request.user
-        )
+        return get_object_or_404(UserVariant, pk=self.kwargs["pk"], user=self.request.user)
 
     def _validate_started_and_not_completed(self, variant: UserVariant):
         if not variant.is_started:
@@ -177,7 +179,11 @@ class SkipVariantTaskView(GenericAPIView):
             raise VariantCompleted
 
     def _get_user_variant_task_or_fail(self, variant: UserVariant):
-        return get_object_or_404(variant.tasks, pk=self.kwargs["task_pk"])
+        task_id = self.kwargs["task_pk"]
+        if not variant.tasks.filter(pk=task_id).exists():
+            raise VariantNotIncludesTask
+
+        return get_object_or_404(UserTask, pk=task_id)
 
 
 class GenerateVariantView(GenericAPIView):

@@ -1,8 +1,6 @@
 from rest_framework.exceptions import APIException
 
 
-
-
 class LessonClosed(APIException):
     status_code = 403
     default_detail = "Lesson closed."
@@ -25,3 +23,8 @@ class LessonAlreadySkipped(APIException):
     status_code = 400
     default_detail = "Lesson already skipped."
     default_code = "already_skipped"
+
+
+class LessonNotIncludesTask(APIException):
+    status_code = 400
+    default_detail = "Lesson not includes this task."

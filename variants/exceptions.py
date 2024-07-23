@@ -19,3 +19,8 @@ class VariantNotStarted(APIException):
 class VariantCompleted(APIException):
     status_code = 400
     default_detail = "Variant completed."
+
+
+class VariantNotIncludesTask(APIException):
+    status_code = 400
+    default_detail = "Variant not includes this task."

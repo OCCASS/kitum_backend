@@ -8,6 +8,7 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+import lessons.tests.test_answer_skip_task
 from .permissions import *
 from .serializers import *
 
@@ -130,16 +131,6 @@ class LessonTaskView(RetrieveAPIView):
     serializer_class = UserTask
     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
-        obj = get_object_or_404(
-            UserTask,
-            task__pk=self.kwargs["task_pk"],
-            lesson__lesson__pk=self.kwargs["pk"],
-            lesson__user=self.request.user,
-        )
-        self.check_object_permissions(self.request, obj)
-        return obj
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
@@ -155,7 +146,7 @@ class AnswerLessonTaskView(GenericAPIView):
         lesson = self._get_user_lesson_or_fail()
         self._validate_tasks_not_completed(lesson)
 
-        task = self._get_user_lesson_task_or_fail()
+        task = self._get_user_lesson_task_or_fail(lesson)
         self._try_to_answer_task(task)
 
         serialized_lesson = self.get_serializer(lesson)
@@ -176,13 +167,12 @@ class AnswerLessonTaskView(GenericAPIView):
         if lesson.is_tasks_completed:
             raise LessonTasksAlreadyCompleted
 
-    def _get_user_lesson_task_or_fail(self) -> UserTask:
-        task = get_object_or_404(
-            UserTask,
-            lesson__lesson__pk=self.kwargs["pk"],
-            task__pk=self.kwargs["task_pk"],
-            lesson__user=self.request.user,
-        )
+    def _get_user_lesson_task_or_fail(self, lesson: UserLesson) -> UserTask:
+        task_id = self.kwargs["task_pk"]
+        if not lesson.tasks.filter(pk=task_id).exists():
+            raise LessonNotIncludesTask
+
+        task = get_object_or_404(UserTask, pk=task_id)
         self.check_object_permissions(self.request, task)
         return task
 
@@ -205,7 +195,7 @@ class SkipLessonTaskView(GenericAPIView):
         lesson = self._get_user_lesson_or_fail()
         self._validate_tasks_not_completed(lesson)
 
-        task = self._get_user_lesson_task_or_fail()
+        task = self._get_user_lesson_task_or_fail(lesson)
         task.try_skip()
 
         serialized_lesson = self.get_serializer(lesson)
@@ -226,13 +216,12 @@ class SkipLessonTaskView(GenericAPIView):
         if lesson.is_tasks_completed:
             raise LessonTasksAlreadyCompleted
 
-    def _get_user_lesson_task_or_fail(self) -> UserTask:
-        task = get_object_or_404(
-            UserTask,
-            lesson__lesson__pk=self.kwargs["pk"],
-            task__pk=self.kwargs["task_pk"],
-            lesson__user=self.request.user,
-        )
+    def _get_user_lesson_task_or_fail(self, lesson: UserLesson) -> UserTask:
+        task_id = self.kwargs["task_pk"]
+        if not lesson.tasks.filter(pk=task_id).exists():
+            raise LessonNotIncludesTask
+
+        task = get_object_or_404(UserTask, pk=task_id)
         self.check_object_permissions(self.request, task)
         return task
 

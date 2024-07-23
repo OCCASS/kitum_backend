@@ -20,7 +20,6 @@ class TaskFileSerializer(ModelSerializer):
 
 
 class UserTaskSerializer(ModelSerializer):
-    id = SerializerMethodField()
     kim_number = CharField()
     cost = CharField()
     content = CharField()
@@ -41,9 +40,6 @@ class UserTaskSerializer(ModelSerializer):
             "created_at",
             "files",
         )
-
-    def get_id(self, obj: UserTask):
-        return obj.task.id
 
     def get_files(self, obj: UserTask):
         files = obj.task.files.all()
