@@ -5,7 +5,7 @@ class CustomUserManager(BaseUserManager):
     use_in_migrations = True
 
     def create_user(
-        self, first_name: str, last_name: str, email: str, password: str, **extra_fields
+            self, first_name: str, last_name: str, email: str, password: str, **extra_fields
     ):
         email = self.normalize_email(email)
         user = self.model(
@@ -19,7 +19,7 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, first_name: str, last_name: str, email: str, password: str, **extra_fields
+            self, first_name: str, last_name: str, email: str, password: str, **extra_fields
     ):
         user = self.create_user(first_name, last_name, email, password, **extra_fields)
         user.is_staff = True

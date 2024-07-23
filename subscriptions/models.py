@@ -38,7 +38,6 @@ class UserSubscription(BaseModel):
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
     active_before = models.DateTimeField(default=None, null=True)

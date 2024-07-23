@@ -1,6 +1,4 @@
-from typing import Literal, TypeAlias
-
-from core.serializers import UserSerializer
+from user.serializers import UserSerializer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import send_mail

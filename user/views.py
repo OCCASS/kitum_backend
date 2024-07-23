@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from authentication.serializers import UserSerializer
+from user.serializers import UserSerializer
 from .serializers import EditUserAvatarSerializer, EditUserSerializer
 
 User = get_user_model()
