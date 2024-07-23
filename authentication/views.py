@@ -1,7 +1,5 @@
-from user.serializers import UserSerializer
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import send_mail
 from django.contrib.auth.tokens import (
     PasswordResetTokenGenerator,
     default_token_generator,
@@ -14,8 +12,9 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
-from .tasks import generate_profile_image_for_user_task
 
+from core.tasks import send_mail_task
+from user.serializers import UserSerializer
 from .exceptions import ConfirmMailTokenIsInvalid, PasswordResetRequestAlreadyCreated
 from .models import ConfirmMail, PasswordReset
 from .serializers import (
@@ -24,6 +23,7 @@ from .serializers import (
     ResetPasswordSerializer,
     TokenObtainPairSerializer,
 )
+from .tasks import generate_profile_image_for_user_task
 
 User = get_user_model()
 
@@ -44,7 +44,7 @@ class RegistrationView(GenericAPIView):
         token = default_token_generator.make_token(user)
         ConfirmMail(user=user, token=token).save()
         url = f"{settings.CONFIRM_MAIL_BASE_URL}/?t={token}"
-        send_mail(
+        send_mail_task.delay(
             "KITUM – подтверждение почты",
             url,
             settings.EMAIL_HOST_USER,
@@ -73,7 +73,7 @@ class ResetPasswordRequestView(GenericAPIView):
             raise PasswordResetRequestAlreadyCreated
         token = self._create_token_for_user(email)
         reset_url = f"{settings.PASSWORD_RESET_BASE_URL}/?t={token}"
-        send_mail(
+        send_mail_task.delay(
             "KITUM – сброс пароля",
             f"Ссылка для сбороса пароля – {reset_url}",
             settings.EMAIL_HOST_USER,
