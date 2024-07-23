@@ -2,11 +2,14 @@ from django.contrib.auth import get_user_model, password_validation
 from rest_framework.serializers import CharField, FileField, Serializer
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
+from subscriptions.serializers import UserSubscriptionSerializer
+
 User = get_user_model()
 
 
 class UserSerializer(ModelSerializer):
     avatar = SerializerMethodField()
+    subscription = UserSubscriptionSerializer(many=False, read_only=True)
 
     class Meta:
         model = User
@@ -18,6 +21,7 @@ class UserSerializer(ModelSerializer):
             "created_at",
             "password",
             "avatar",
+            "subscription",
         )
         extra_kwargs = {"id": {"read_only": True}, "password": {"write_only": True}}
 
