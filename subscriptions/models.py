@@ -1,8 +1,8 @@
 from core.models import BaseModel
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.db import models
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class Subscription(BaseModel):
@@ -27,7 +27,7 @@ class SubscriptionOrder(BaseModel):
 
     payment_id = models.CharField(max_length=50)
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True)
 
 
 class UserSubscription(BaseModel):
