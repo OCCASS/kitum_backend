@@ -1,4 +1,5 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import PermissionManager
 from django.db import models
 
 from core.models import BaseModel
@@ -6,7 +7,7 @@ from subscriptions.models import UserSubscription
 from .managers import CustomUserManager
 
 
-class User(BaseModel, AbstractBaseUser, PermissionsMixin):
+class User(BaseModel, AbstractBaseUser, PermissionManager):
     """Модель пользователя"""
 
     class Meta:
