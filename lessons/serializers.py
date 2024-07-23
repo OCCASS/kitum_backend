@@ -80,6 +80,7 @@ class UserLessonSerializer(ModelSerializer):
             "updated_at",
             "complete_tasks_deadline",
             "opens_at",
+            "result"
         )
 
     def get_id(self, obj: UserLesson) -> str:

@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -5,7 +7,6 @@ from django.utils import timezone
 
 from core.models import BaseModel
 from subscriptions.models import Subscription
-
 from .exceptions import *
 from .managers import UserLessonManager, UserLessonTaskManager
 
@@ -87,6 +88,7 @@ class UserLesson(BaseModel):
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField(null=False)
     is_tasks_completed = models.BooleanField(default=False)
+    result = models.IntegerField(null=True)
     opens_at = models.DateTimeField(null=False)
 
     objects = UserLessonManager()
@@ -115,6 +117,7 @@ class UserLesson(BaseModel):
 
         self.is_tasks_completed = True
         self.tasks.filter(answer=None).update(is_skipped=True)
+        self.result = self._get_result()
         self.save()
 
     def try_skip(self) -> None:
@@ -129,6 +132,13 @@ class UserLesson(BaseModel):
         self.is_completed = True
         self.completed_at = timezone.now()
         self.save()
+
+    def _get_result(self) -> int:
+        """Процент от правильно выполненных задач"""
+
+        total_count = self.tasks.all().count()
+        correct_count = self.tasks.filter(is_correct=True).count()
+        return math.ceil(correct_count / total_count * 100)
 
 
 class UserLessonTask(BaseModel):
