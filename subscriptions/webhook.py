@@ -1,19 +1,18 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from ipware import get_client_ip
-from lessons.models import Lesson, UserLesson, UserLessonTask
 from yookassa.domain.common import SecurityHelper
 from yookassa.domain.notification import (
     WebhookNotificationEventType,
     WebhookNotificationFactory,
 )
 
+from lessons.models import Lesson, UserLesson, UserLessonTask
 from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
@@ -32,17 +31,16 @@ def payment_webhook(request, *args, **kwargs):
     try:
         notification = WebhookNotificationFactory().create(data)
         if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
-            subscription_order = SubscriptionOrder.objects.get(
-                payment_id=notification.object.id
-            )
+            subscription_order = SubscriptionOrder.objects.get(payment_id=notification.object.id)
             user, subscription = (
                 subscription_order.user,
                 subscription_order.subscription,
             )
-            if is_user_have_active_subscription(subscription, user):
+            if user.subscription:
+                renew_user_subscription(user.subscription)
                 return HttpResponse(status=200)
 
-            renew_or_create_user_subscription(subscription, user)
+            new_user_subscription(subscription, user)
             create_user_lessons(subscription, user)
 
             return HttpResponse(status=200)
@@ -50,35 +48,20 @@ def payment_webhook(request, *args, **kwargs):
         return HttpResponse(status=400)
 
 
-def is_user_have_active_subscription(subscription, user: User) -> bool:
-    return UserSubscription.objects.filter(
-        user=user, active_before__gte=timezone.now(), subscription=subscription
-    ).exists()
-
-
-def renew_or_create_user_subscription(subscription: Subscription, user: User):
-    """Создает или продлевает подписку пользователя в зависимости от того куплена она у него или нет"""
-
-    try:
-        active_user_subscription = UserSubscription.objects.get(
-            subscription=subscription, user=user, active_before__lte=timezone.now()
-        )
-        renew_user_subscription(active_user_subscription)
-    except ObjectDoesNotExist:
-        new_user_subscription(subscription, user)
-
-
 def new_user_subscription(subscription: Subscription, user: User) -> None:
     """Создает подписку для пользователя"""
 
     now = timezone.now()
     active_before = now.replace(month=(now.month + 1) % 12)
-    UserSubscription(
+    user_subscription = UserSubscription(
         subscription=subscription,
-        user=user,
         purchased_at=now,
         active_before=active_before,
-    ).save()
+    )
+    user_subscription.save()
+
+    user.subscription = user_subscription
+    user.save()
 
 
 def renew_user_subscription(user_subscription: UserSubscription) -> None:

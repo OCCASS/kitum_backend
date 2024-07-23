@@ -1,29 +1,20 @@
-from django.db import models
-from django.utils import timezone
+from rest_framework.exceptions import APIException
 from rest_framework.generics import GenericAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import Response
-from services.payment import create_payment
 
-from subscriptions.models import Subscription, SubscriptionOrder, UserSubscription
+from services.payment import create_payment
+from subscriptions.models import Subscription, SubscriptionOrder
 from subscriptions.serializers import (
     OrderSubscriptionSerializer,
     SubscriptionSerializer,
-    UserSubscriptionSerializer,
 )
 
 
-class UnpurchasedSubscriptionsList(ListAPIView):
+class SubscriptionsList(ListAPIView):
     queryset = Subscription.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     serializer_class = SubscriptionSerializer
-
-    def filter_queryset(self, queryset: models.QuerySet):
-        # return queryset.exclude(usersubscription__user=self.request.user)
-        user_subscriptions = UserSubscription.objects.filter(
-            user=self.request.user
-        ).values_list("subscription_id", flat=True)
-        return queryset.exclude(id__in=user_subscriptions)
 
 
 class OrderSubscription(GenericAPIView):
@@ -31,6 +22,9 @@ class OrderSubscription(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        if self.request.user.subscription:
+            return Response({"detail": "User already has subscription."}, status=400)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -51,20 +45,3 @@ class OrderSubscription(GenericAPIView):
 
     def get_object(self):
         return Subscription.objects.get(pk=self.kwargs.get("pk"))
-
-
-class MySubscriptions(ListAPIView):
-    queryset = (
-        UserSubscription.objects.all()
-        .select_related("subscription")
-        .annotate(
-            title=models.F("subscription__title"), price=models.F("subscription__price")
-        )
-    )
-    serializer_class = UserSubscriptionSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def filter_queryset(self, queryset):
-        return queryset.filter(
-            user=self.request.user, active_before__gte=timezone.now()
-        )

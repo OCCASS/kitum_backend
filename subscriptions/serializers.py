@@ -1,11 +1,11 @@
-from rest_framework.serializers import CharField, ModelSerializer, Serializer
+from rest_framework.serializers import CharField, ModelSerializer, Serializer, SerializerMethodField
 
 from subscriptions.models import Subscription, UserSubscription
 
 
 class UserSubscriptionSerializer(ModelSerializer):
-    title = CharField()
-    price = CharField()
+    title = SerializerMethodField()
+    price = SerializerMethodField()
 
     class Meta:
         model = UserSubscription
@@ -17,6 +17,12 @@ class UserSubscriptionSerializer(ModelSerializer):
             "price",
             "active_before",
         )
+
+    def get_title(self, instance: UserSubscription):
+        return instance.subscription.title
+
+    def get_price(self, instance: UserSubscription):
+        return instance.subscription.price
 
 
 class SubscriptionSerializer(ModelSerializer):
