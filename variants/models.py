@@ -7,8 +7,7 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
-from lessons.exceptions import TaskAlreadyAnswered, TaskAlreadySkipped
-from lessons.models import Task
+from tasks.models import Task, UserTask
 from .exceptions import VariantAlreadyCompleted, VariantAlreadyStarted
 from .managers import UserVariantManager
 
@@ -56,7 +55,7 @@ class UserVariant(BaseModel):
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
-    tasks = models.ManyToManyField("UserVariantTask")
+    tasks = models.ManyToManyField(UserTask)
     generated = models.BooleanField(default=False)
     complexity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(3)]
@@ -99,29 +98,3 @@ class UserVariant(BaseModel):
             return VariantScoreTable.objects.get(primary=total_primary_score).secondary
         except models.ObjectDoesNotExist:
             return 0
-
-
-class UserVariantTask(BaseModel):
-    class Meta:
-        db_table = "user_variant_task"
-        verbose_name = "Задача"
-        verbose_name_plural = "Задачи"
-
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    answer = models.JSONField(null=True)
-    is_correct = models.BooleanField(null=True, default=None)
-    is_skipped = models.BooleanField(default=False)
-
-    def try_answer(self, answer: list) -> None:
-        self.answer = answer
-        self.is_correct = self.task.correct_answer == answer
-        self.save()
-
-    def try_skip(self) -> None:
-        if self.is_skipped:
-            raise TaskAlreadySkipped
-        elif self.answer is not None:
-            raise TaskAlreadyAnswered
-
-        self.is_skipped = True
-        self.save()

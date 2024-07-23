@@ -30,7 +30,6 @@ class VariantsView(ListAPIView):
 
         return queryset
 
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
@@ -137,7 +136,7 @@ class AnswerVariantTaskView(GenericAPIView):
     def _get_user_variant_task_or_fail(self, variant: UserVariant):
         return get_object_or_404(variant.tasks, pk=self.kwargs["task_pk"])
 
-    def _try_to_answer_task(self, task: UserVariantTask):
+    def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
         task.try_answer(answer_data)
 
@@ -209,9 +208,9 @@ class GenerateVariantView(GenericAPIView):
         for n in range(min_kim_number, max_kim_number + 1):
             if n in tasks_by_kim_number:
                 task = random.choice(tasks_by_kim_number[n])
-                tasks.append(UserVariantTask(task=task))
+                tasks.append(UserTask(task=task))
 
-        UserVariantTask.objects.bulk_create(tasks)
+        UserTask.objects.bulk_create(tasks)
         variant.tasks.add(*tasks)
         variant.save()
         return variant

@@ -7,52 +7,8 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from lessons.serializers import TaskFileSerializer
+from tasks.serializers import UserTaskSerializer
 from .models import *
-
-
-class UserVariantTaskSerializer(ModelSerializer):
-    id = SerializerMethodField()
-    kim_number = SerializerMethodField()
-    cost = SerializerMethodField()
-    content = SerializerMethodField()
-    type = SerializerMethodField()
-    files = SerializerMethodField()
-
-    class Meta:
-        model = UserVariantTask
-        fields = (
-            "id",
-            "kim_number",
-            "cost",
-            "content",
-            "answer",
-            "type",
-            "is_correct",
-            "is_skipped",
-            "created_at",
-            "files",
-        )
-
-    def get_id(self, obj: UserVariantTask):
-        return obj.task.id
-
-    def get_kim_number(self, obj: UserVariantTask):
-        return obj.task.kim_number
-
-    def get_cost(self, obj: UserVariantTask):
-        return obj.task.cost
-
-    def get_type(self, obj: UserVariantTask):
-        return obj.task.type
-
-    def get_content(self, obj: UserVariantTask):
-        return obj.task.content
-
-    def get_files(self, obj: UserVariantTask):
-        files = obj.task.files.all()
-        serializer = TaskFileSerializer(files, many=True, context=self.context)
-        return serializer.data
 
 
 class UserVariantSerializer(ModelSerializer):
@@ -98,7 +54,7 @@ class UserVariantSerializer(ModelSerializer):
             .all()
             .order_by("task__kim_number")
         )
-        serializer = UserVariantTaskSerializer(
+        serializer = UserTaskSerializer(
             tasks, many=True, read_only=True, context=self.context
         )
         return serializer.data
@@ -117,4 +73,3 @@ class AnswerTaskSerializer(Serializer):
 class GenerateVariantSerializer(Serializer):
     name = CharField(required=True)
     complexity = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
-

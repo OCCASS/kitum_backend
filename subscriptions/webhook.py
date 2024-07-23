@@ -12,7 +12,8 @@ from yookassa.domain.notification import (
     WebhookNotificationFactory,
 )
 
-from lessons.models import Lesson, UserLesson, UserLessonTask
+from lessons.models import Lesson, UserLesson
+from tasks.models import UserTask
 from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
@@ -103,10 +104,14 @@ def create_user_lessons(subscription: Subscription, user: User) -> None:
         created_user_lessons = UserLesson.objects.bulk_create(user_lessons)
         lesson_to_user_lesson = {ul.lesson_id: ul for ul in created_user_lessons}
 
-        user_lesson_tasks = []
         for lesson in lessons:
+            tasks = []
             user_lesson = lesson_to_user_lesson[lesson.id]
-            for task in lesson.tasks.all():
-                user_lesson_tasks.append(UserLessonTask(lesson=user_lesson, task=task))
 
-        UserLessonTask.objects.bulk_create(user_lesson_tasks)
+            for task in lesson.tasks.all():
+                tasks.append(UserTask(task=task))
+
+            UserTask.objects.bulk_create(tasks)
+
+            user_lesson.tasks.add(*tasks)
+            user_lesson.save()

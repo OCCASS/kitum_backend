@@ -126,13 +126,13 @@ class SkipLessonView(GenericAPIView):
 
 
 class LessonTaskView(RetrieveAPIView):
-    queryset = UserLessonTask.objects.all()
-    serializer_class = UserLessonTaskSerializer
+    queryset = UserTask.objects.all()
+    serializer_class = UserTask
     permission_classes = (IsAuthenticated,)
 
     def get_object(self):
         obj = get_object_or_404(
-            UserLessonTask,
+            UserTask,
             task__pk=self.kwargs["task_pk"],
             lesson__lesson__pk=self.kwargs["pk"],
             lesson__user=self.request.user,
@@ -147,7 +147,7 @@ class LessonTaskView(RetrieveAPIView):
 
 
 class AnswerLessonTaskView(GenericAPIView):
-    queryset = UserLessonTask.objects.all()
+    queryset = UserTask.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -176,9 +176,9 @@ class AnswerLessonTaskView(GenericAPIView):
         if lesson.is_tasks_completed:
             raise LessonTasksAlreadyCompleted
 
-    def _get_user_lesson_task_or_fail(self) -> UserLessonTask:
+    def _get_user_lesson_task_or_fail(self) -> UserTask:
         task = get_object_or_404(
-            UserLessonTask,
+            UserTask,
             lesson__lesson__pk=self.kwargs["pk"],
             task__pk=self.kwargs["task_pk"],
             lesson__user=self.request.user,
@@ -186,7 +186,7 @@ class AnswerLessonTaskView(GenericAPIView):
         self.check_object_permissions(self.request, task)
         return task
 
-    def _try_to_answer_task(self, task: UserLessonTask):
+    def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
         task.try_answer(answer_data)
 
@@ -197,7 +197,7 @@ class AnswerLessonTaskView(GenericAPIView):
 
 
 class SkipLessonTaskView(GenericAPIView):
-    queryset = UserLessonTask.objects.all()
+    queryset = UserTask.objects.all()
     serializer_class = UserLessonSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -226,9 +226,9 @@ class SkipLessonTaskView(GenericAPIView):
         if lesson.is_tasks_completed:
             raise LessonTasksAlreadyCompleted
 
-    def _get_user_lesson_task_or_fail(self) -> UserLessonTask:
+    def _get_user_lesson_task_or_fail(self) -> UserTask:
         task = get_object_or_404(
-            UserLessonTask,
+            UserTask,
             lesson__lesson__pk=self.kwargs["pk"],
             task__pk=self.kwargs["task_pk"],
             lesson__user=self.request.user,
