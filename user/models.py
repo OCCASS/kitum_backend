@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionManager
 from django.db import models
+from django.utils import timezone
 
 from core.models import BaseModel
 from subscriptions.models import UserSubscription
@@ -20,7 +21,6 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
     avatar = models.FileField(upload_to="avatar")
     email = models.EmailField(null=False, unique=True)
     password = models.CharField(max_length=256)
-    subscription = models.ForeignKey(UserSubscription, on_delete=models.SET_NULL, null=True)
     is_confirmed = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
@@ -28,3 +28,6 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
     REQUIRED_FIELDS = ("first_name", "last_name")
 
     objects = CustomUserManager()
+
+    def get_subscription(self):
+        return self.subscription.filter(active_before__gt=timezone.now()).first()

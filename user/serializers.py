@@ -9,7 +9,7 @@ User = get_user_model()
 
 class UserSerializer(ModelSerializer):
     avatar = SerializerMethodField()
-    subscription = UserSubscriptionSerializer(many=False, read_only=True)
+    subscription = SerializerMethodField()
 
     class Meta:
         model = User
@@ -30,6 +30,12 @@ class UserSerializer(ModelSerializer):
         if request and obj.avatar:
             return request.build_absolute_uri(obj.avatar.url)
         return ""
+
+    def get_subscription(self, obj: User):
+        subscription = obj.get_subscription()
+        if subscription:
+            return UserSubscriptionSerializer(subscription).data
+        return None
 
     def save(self, **kwargs):
         return self.Meta.model.objects.create_user(**self.validated_data)

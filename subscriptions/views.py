@@ -22,7 +22,7 @@ class OrderSubscription(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        if self.request.user.subscription:
+        if self.request.user.get_subscription():
             return Response({"detail": "User already has subscription."}, status=400)
 
         serializer = self.get_serializer(data=request.data)

@@ -36,8 +36,9 @@ def payment_webhook(request, *args, **kwargs):
                 subscription_order.user,
                 subscription_order.subscription,
             )
-            if user.subscription:
-                renew_user_subscription(user.subscription)
+            user_subscription = user.get_subscription()
+            if user_subscription:
+                renew_user_subscription(user_subscription)
                 return HttpResponse(status=200)
 
             new_user_subscription(subscription, user)
@@ -53,15 +54,12 @@ def new_user_subscription(subscription: Subscription, user: User) -> None:
 
     now = timezone.now()
     active_before = now.replace(month=(now.month + 1) % 12)
-    user_subscription = UserSubscription(
+    UserSubscription(
         subscription=subscription,
         purchased_at=now,
         active_before=active_before,
-    )
-    user_subscription.save()
-
-    user.subscription = user_subscription
-    user.save()
+        user=user
+    ).save()
 
 
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
