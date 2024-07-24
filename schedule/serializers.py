@@ -88,4 +88,4 @@ class HomeworkEventSerializer(EventSerializer):
         return obj.opens_at <= timezone.now()
 
     def get_is_completed(self, obj: UserLesson):
-        return obj.is_tasks_completed
+        return obj.status == UserLesson.TASKS_COMPLETED
