@@ -20,6 +20,12 @@ class LessonsView(ListAPIView):
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user)
 
+    def filter_queryset(self, queryset):
+        status = self.request.query_params.get("status")
+        if status is not None:
+            return queryset.filter(status=status)
+        return queryset
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request, "without_tasks": True})
