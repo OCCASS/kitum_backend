@@ -24,9 +24,7 @@ class UserLessonSerializer(ModelSerializer):
             "content",
             "tasks",
             "is_closed",
-            "is_completed",
-            "is_tasks_completed",
-            "is_skipped",
+            "status",
             "started_at",
             "completed_at",
             "created_at",
@@ -55,7 +53,7 @@ class UserLessonSerializer(ModelSerializer):
         return data
 
     def _should_hide_tasks(self, obj: UserLesson):
-        return (not obj.is_completed and not obj.is_skipped) or self.context.get(
+        return (obj.status != UserLesson.COMPLETED and obj.status != UserLesson.TASKS_COMPLETED) or self.context.get(
             "without_tasks", False
         )
 

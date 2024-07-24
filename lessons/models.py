@@ -30,12 +30,18 @@ class Lesson(BaseModel):
 class UserLesson(BaseModel):
     """Урок пользователя, который доступен ему"""
 
+    NOT_STARTED = "not_started"
+    STARTED = "started"
+    COMPLETED = "completed"
+    TASKS_COMPLETED = "tasks_completed"
+    STATUS_CHOICES = {0: NOT_STARTED, 1: STARTED, 2: COMPLETED,
+                      3: TASKS_COMPLETED}
+
     class Meta:
         db_table = "user_lesson"
         ordering = (
             "opens_at",
-            "is_tasks_completed",
-            "-is_completed",
+            "status",
             "created_at",
         )
         verbose_name = "Урок"
@@ -43,12 +49,10 @@ class UserLesson(BaseModel):
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
-    is_completed = models.BooleanField(default=False)
-    is_skipped = models.BooleanField(default=False)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField(null=False)
-    is_tasks_completed = models.BooleanField(default=False)
     result = models.IntegerField(null=True)
     opens_at = models.DateTimeField(null=False)
     tasks = models.ManyToManyField(UserTask)
@@ -59,40 +63,29 @@ class UserLesson(BaseModel):
     def is_closed(self):
         return self.opens_at > timezone.now()
 
+    @property
+    def is_completed(self):
+        return self.status == self.COMPLETED
+
     def try_complete(self) -> None:
         if self.is_closed:
             raise LessonClosed
-        elif self.is_skipped:
-            raise LessonAlreadySkipped
         elif self.is_completed:
             raise LessonAlreadyCompleted
 
-        self.is_completed = True
+        self.status = self.COMPLETED
         self.completed_at = timezone.now()
         self.save()
 
     def try_complete_tasks(self) -> None:
         if self.is_closed:
             raise LessonClosed
-        elif self.is_tasks_completed:
+        elif self.status == self.TASKS_COMPLETED:
             raise LessonTasksAlreadyCompleted
 
-        self.is_tasks_completed = True
+        self.status = self.TASKS_COMPLETED
         self.tasks.filter(answer=None).update(is_skipped=True)
         self.result = self._get_result()
-        self.save()
-
-    def try_skip(self) -> None:
-        if self.is_closed:
-            raise LessonClosed
-        elif self.is_skipped:
-            raise LessonAlreadySkipped
-        elif self.is_completed:
-            raise LessonAlreadyCompleted
-
-        self.is_skipped = True
-        self.is_completed = True
-        self.completed_at = timezone.now()
         self.save()
 
     def _get_result(self) -> int:

@@ -26,7 +26,6 @@ urlpatterns = [
         CompleteLessonTasksView.as_view(),
         name="lesson_tasks_complete",
     ),
-    path("<str:pk>/skip/", SkipLessonView.as_view(), name="lesson_skip"),
     path(
         "<str:pk>/<str:task_pk>/",
         LessonTaskView.as_view(),

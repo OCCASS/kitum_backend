@@ -8,7 +8,6 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-import lessons.tests.test_answer_skip_task
 from .permissions import *
 from .serializers import *
 
@@ -104,28 +103,6 @@ class CompleteLessonTasksView(GenericAPIView):
         return context
 
 
-class SkipLessonView(GenericAPIView):
-    queryset = UserLesson.objects.all()
-    permission_classes = (IsAuthenticated,)
-    serializer_class = UserLessonSerializer
-
-    def post(self, request, *args, **kwargs):
-        lesson = self.get_object()
-        lesson.try_skip()
-        return Response(self.get_serializer(lesson).data)
-
-    def get_object(self) -> UserLesson:
-        pk = self.kwargs["pk"]
-        obj = UserLesson.objects.available_for_or_404(pk, self.request.user)
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request, "without_tasks": True})
-        return context
-
-
 class LessonTaskView(RetrieveAPIView):
     queryset = UserTask.objects.all()
     serializer_class = UserTask
@@ -164,7 +141,7 @@ class AnswerLessonTaskView(GenericAPIView):
         return lesson
 
     def _validate_tasks_not_completed(self, lesson: UserLesson):
-        if lesson.is_tasks_completed:
+        if lesson.status == UserLesson.TASKS_COMPLETED:
             raise LessonTasksAlreadyCompleted
 
     def _get_user_lesson_task_or_fail(self, lesson: UserLesson) -> UserTask:
@@ -215,7 +192,7 @@ class SkipLessonTaskView(GenericAPIView):
         return lesson
 
     def _validate_tasks_not_completed(self, lesson: UserLesson):
-        if lesson.is_tasks_completed:
+        if lesson.status == UserLesson.TASKS_COMPLETED:
             raise LessonTasksAlreadyCompleted
 
     def _get_user_lesson_task_or_fail(self, lesson: UserLesson) -> UserTask:
@@ -235,7 +212,7 @@ class HomeworkLessons(ListAPIView):
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
-            is_completed=True
+            models.Q(status=UserLesson.COMPLETED) | models.Q(status=UserLesson.TASKS_COMPLETED)
         )
 
     def get_serializer_context(self):
@@ -251,7 +228,7 @@ class NotCompletedHomeworkLessons(ListAPIView):
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
-            is_tasks_completed=False, is_completed=True
+            status=UserLesson.COMPLETED
         )
 
     def get_serializer_context(self):
