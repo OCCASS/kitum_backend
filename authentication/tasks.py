@@ -43,7 +43,7 @@ def generate_profile_image_for_user_task(user_id: str, size=128):
     )
 
     image_io = BytesIO()
-    image.save(image_io, format="PNG")
-    file = ContentFile(image_io.getvalue(), f"{user.id}.png")
+    image.save(image_io, format="webp")
+    file = ContentFile(image_io.getvalue(), f"{user.id}.webp")
     user.avatar = file
     user.save()
