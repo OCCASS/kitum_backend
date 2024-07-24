@@ -33,7 +33,7 @@ class NotCompletedLessonsView(ListAPIView):
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
-            is_completed=False
+            ~models.Q(status=UserLesson.COMPLETED) & ~models.Q(status=UserLesson.TASKS_COMPLETED)
         )
 
     def get_serializer_context(self):
