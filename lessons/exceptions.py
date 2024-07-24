@@ -28,3 +28,8 @@ class LessonAlreadySkipped(APIException):
 class LessonNotIncludesTask(APIException):
     status_code = 400
     default_detail = "Lesson not includes this task."
+
+
+class AnswerIsEmptyError(APIException):
+    status_code = 400
+    default_detail = "Answer is empty."

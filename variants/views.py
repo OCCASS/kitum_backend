@@ -5,7 +5,7 @@ from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .exceptions import VariantCompleted, VariantNotStarted, VariantNotIncludesTask
+from .exceptions import *
 from .serializers import *
 
 User = get_user_model()
@@ -142,6 +142,8 @@ class AnswerVariantTaskView(GenericAPIView):
 
     def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
+        if not all(answer_data):
+            raise AnswerIsEmptyError
         task.try_answer(answer_data)
 
     def _get_answer_data(self) -> list:

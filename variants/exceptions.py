@@ -24,3 +24,8 @@ class VariantCompleted(APIException):
 class VariantNotIncludesTask(APIException):
     status_code = 400
     default_detail = "Variant not includes this task."
+
+
+class AnswerIsEmptyError(APIException):
+    status_code = 400
+    default_detail = "Answer is empty."
