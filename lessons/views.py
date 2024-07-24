@@ -178,7 +178,7 @@ class AnswerLessonTaskView(GenericAPIView):
 
     def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
-        if not all(answer_data):
+        if not answer_data or not all(answer_data):
             raise AnswerIsEmptyError
         task.try_answer(answer_data)
 
