@@ -30,6 +30,7 @@ PyJWT==2.8.0
 python-crontab==3.2.0
 python-dateutil==2.9.0.post0
 python-ipware==3.0.0
+redis==5.0.7
 requests==2.32.3
 six==1.16.0
 sqlparse==0.5.1
