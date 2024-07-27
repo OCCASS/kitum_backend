@@ -25,6 +25,7 @@ class UserTaskSerializer(ModelSerializer):
     content = CharField()
     type = CharField()
     files = SerializerMethodField()
+    correct_answer = SerializerMethodField()
 
     class Meta:
         model = UserTask
@@ -39,7 +40,13 @@ class UserTaskSerializer(ModelSerializer):
             "is_skipped",
             "created_at",
             "files",
+            "correct_answer"
         )
+
+    def get_correct_answer(self, obj: UserTask) -> list | None:
+        if self.context.get("show_correct_answer", False):
+            return obj.task.correct_answer
+        return None
 
     def get_files(self, obj: UserTask):
         files = obj.task.files.all()

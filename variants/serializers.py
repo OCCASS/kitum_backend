@@ -54,8 +54,10 @@ class UserVariantSerializer(ModelSerializer):
             .all()
             .order_by("task__kim_number")
         )
+        context = self.context.copy()
+        context.update({"show_correct_answer": obj.is_completed})
         serializer = UserTaskSerializer(
-            tasks, many=True, read_only=True, context=self.context
+            tasks, many=True, read_only=True, context=context
         )
         return serializer.data
 
