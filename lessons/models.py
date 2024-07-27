@@ -24,6 +24,7 @@ class Lesson(BaseModel):
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
+    opens_at = models.DateTimeField(null=False)
     subscriptions = models.ManyToManyField(Subscription)
 
 
@@ -40,7 +41,7 @@ class UserLesson(BaseModel):
     class Meta:
         db_table = "user_lesson"
         ordering = (
-            "opens_at",
+            "lesson__opens_at",
             "status",
             "created_at",
         )
@@ -54,14 +55,13 @@ class UserLesson(BaseModel):
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField(null=False)
     result = models.IntegerField(null=True)
-    opens_at = models.DateTimeField(null=False)
     tasks = models.ManyToManyField(UserTask)
 
     objects = UserLessonManager()
 
     @property
     def is_closed(self):
-        return self.opens_at > timezone.now()
+        return self.lesson.opens_at > timezone.now()
 
     @property
     def is_completed(self):

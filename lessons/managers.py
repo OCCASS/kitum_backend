@@ -11,13 +11,13 @@ User = get_user_model()
 class UserLessonQuerySet(models.QuerySet):
     def all_available_for(self, user: User):
         """Возвращает уроки, которые были куплены пользователем, то есть доступные ему"""
-        return self.filter(opens_at__lte=timezone.now(), user=user)
+        return self.filter(lesson__opens_at__lte=timezone.now(), user=user)
 
     def available_for(self, pk: str, user: User):
         """Возвращает урок, который были куплен пользователем, то есть доступный ему"""
 
         return self.filter(
-            lesson__pk=pk, opens_at__lte=timezone.now(), user=user
+            lesson__pk=pk, lesson__opens_at__lte=timezone.now(), user=user
         ).first()
 
 

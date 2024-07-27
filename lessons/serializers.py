@@ -15,6 +15,7 @@ class UserLessonSerializer(ModelSerializer):
     title = CharField()
     content = CharField()
     tasks = SerializerMethodField()
+    opens_at = SerializerMethodField()
 
     class Meta:
         model = UserLesson
@@ -36,6 +37,9 @@ class UserLessonSerializer(ModelSerializer):
 
     def get_id(self, obj: UserLesson) -> str:
         return obj.lesson.id
+
+    def get_opens_at(self, obj: UserLesson):
+        return obj.lesson.opens_at
 
     def get_tasks(self, obj: UserLesson):
         if self._should_hide_tasks(obj):

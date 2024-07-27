@@ -29,9 +29,9 @@ class ScheduleListView(GenericAPIView):
         from_date, to_date = self.get_from_date(), self.get_to_date()
         queryset = UserLesson.objects.filter(user=self.request.user)
         if from_date:
-            queryset = queryset.filter(opens_at__gte=from_date)
+            queryset = queryset.filter(lesson__opens_at__gte=from_date)
         if to_date:
-            queryset = queryset.filter(opens_at__lte=to_date)
+            queryset = queryset.filter(lesson__opens_at__lte=to_date)
         return queryset
 
     def get_from_date(self):
