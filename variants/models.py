@@ -78,7 +78,7 @@ class UserVariant(BaseModel):
 
         self.completed_at = timezone.now()
         self.status = self.COMPLETED
-        self.tasks.filter(answer=None).update(is_skipped=True)
+        self.tasks.filter(answer=None).update(is_correct=False, is_skipped=True)
         self.result = self._get_result()
         self.save()
 
