@@ -67,8 +67,10 @@ class UserLessonSerializer(ModelSerializer):
             .all()
             .order_by("created_at")
         )
+        context = self.context
+        context.update({"show_correct_answer": obj.status == UserLesson.TASKS_COMPLETED})
         serializer = UserTaskSerializer(
-            tasks, many=True, read_only=True, context=self.context
+            tasks, many=True, read_only=True, context=context
         )
         return serializer.data
 
