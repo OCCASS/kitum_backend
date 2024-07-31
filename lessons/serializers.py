@@ -16,6 +16,7 @@ class UserLessonSerializer(ModelSerializer):
     content = CharField()
     tasks = SerializerMethodField()
     opens_at = SerializerMethodField()
+    video = SerializerMethodField()
 
     class Meta:
         model = UserLesson
@@ -32,7 +33,8 @@ class UserLessonSerializer(ModelSerializer):
             "updated_at",
             "complete_tasks_deadline",
             "opens_at",
-            "result"
+            "result",
+            "video"
         )
 
     def get_id(self, obj: UserLesson) -> str:
@@ -45,6 +47,11 @@ class UserLessonSerializer(ModelSerializer):
         if self._should_hide_tasks(obj):
             return []
         return self._serialized_tasks(obj)
+
+    def get_video(self, obj: UserLesson):
+        request = self.context.get("request")
+        file_url = obj.lesson.video.url
+        return request.build_absolute_uri(file_url)
 
     def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed

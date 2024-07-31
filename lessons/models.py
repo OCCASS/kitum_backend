@@ -23,6 +23,7 @@ class Lesson(BaseModel):
 
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
+    video = models.FileField(upload_to="videos/", null=False)
     tasks = models.ManyToManyField(Task)
     opens_at = models.DateTimeField(null=False)
     subscriptions = models.ManyToManyField(Subscription)

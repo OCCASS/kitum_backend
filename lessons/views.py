@@ -223,7 +223,7 @@ class HomeworkLessons(ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update({"without_tasks": True})
+        context.update({"request": self.request, "without_tasks": True})
         return context
 
 
@@ -239,5 +239,5 @@ class NotCompletedHomeworkLessons(ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update({"without_tasks": True})
+        context.update({"request": self.request, "without_tasks": True})
         return context
