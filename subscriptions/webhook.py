@@ -80,9 +80,7 @@ def create_user_lessons(subscription: Subscription, user: User) -> None:
         "lesson_id", flat=True
     )
     lessons = (
-        Lesson.objects.filter(
-            subscriptions__id=subscription.id, created_at__month=current_month
-        )
+        subscription.lesson_set.filter(opens_at__month=current_month)
         .exclude(id__in=exists_lessons)
         .order_by("created_at")
         .prefetch_related("subscriptions", "tasks")
