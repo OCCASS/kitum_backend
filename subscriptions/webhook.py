@@ -40,11 +40,9 @@ def payment_webhook(request, *args, **kwargs):
             user_subscription = user.get_subscription()
             if user_subscription:
                 renew_user_subscription(user_subscription)
-                return HttpResponse(status=200)
-
-            new_user_subscription(subscription, user)
+            else:
+                new_user_subscription(subscription, user)
             create_user_lessons(subscription, user)
-
             return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=400)
