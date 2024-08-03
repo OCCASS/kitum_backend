@@ -48,8 +48,8 @@ def payment_webhook(request, *args, **kwargs):
             else:
                 lessons_from = timezone.localdate()
                 user_subscription = new_user_subscription(subscription, user)
-            lessons_before = user_subscription.active_before
-            create_user_lessons(subscription, user, (lessons_from, lessons_before))
+            lessons_to = user_subscription.active_before
+            create_user_lessons(subscription, user, (lessons_from, lessons_to))
             return HttpResponse(status=200)
     except Exception as e:
         logger.error(f"{e.__class__.__name__}{e.args}")
@@ -83,12 +83,12 @@ def renew_user_subscription(user_subscription: UserSubscription) -> None:
 def create_user_lessons(subscription: Subscription, user: User, period: tuple[timezone, timezone]) -> None:
     """Создать уроки пользователя на купленный месяц, в следствии покупки подписки"""
 
-    from_, before = period
+    from_, to = period
     exists_lessons = UserLesson.objects.filter(user=user).values_list(
         "lesson_id", flat=True
     )
     lessons = (
-        subscription.lesson_set.filter(opens_at__gte=from_, opens_at__lte=before)
+        subscription.lesson_set.filter(opens_at__gte=from_, opens_at__lte=to)
         .exclude(id__in=exists_lessons)
         .order_by("created_at")
         .prefetch_related("subscriptions", "tasks")
