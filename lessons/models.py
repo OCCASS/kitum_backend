@@ -67,7 +67,7 @@ class UserLesson(BaseModel):
 
     @property
     def is_closed(self):
-        return self.lesson.opens_at > timezone.now()
+        return self.lesson.opens_at > timezone.localdate()
 
     @property
     def is_completed(self):

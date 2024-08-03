@@ -18,7 +18,7 @@ class LessonsView(ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return UserLesson.objects.all_available_for(self.request.user)
+        return UserLesson.objects.filter(user=self.request.user)
 
     def filter_queryset(self, queryset):
         status = self.request.query_params.get("status")
