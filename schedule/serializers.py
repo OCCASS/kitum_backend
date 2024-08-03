@@ -61,7 +61,7 @@ class LessonEventSerializer(EventSerializer):
         return "lesson"
 
     def get_is_available(self, obj: UserLesson):
-        return obj.lesson.opens_at <= timezone.now()
+        return obj.lesson.opens_at <= timezone.now().date()
 
     def get_is_completed(self, obj: UserLesson):
         return obj.is_completed
@@ -85,7 +85,7 @@ class HomeworkEventSerializer(EventSerializer):
         return "homework"
 
     def get_is_available(self, obj: UserLesson):
-        return obj.lesson.opens_at <= timezone.now()
+        return obj.lesson.opens_at <= timezone.now().date()
 
     def get_is_completed(self, obj: UserLesson):
         return obj.status == UserLesson.TASKS_COMPLETED

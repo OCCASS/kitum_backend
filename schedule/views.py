@@ -34,18 +34,18 @@ class ScheduleListView(GenericAPIView):
             queryset = queryset.filter(lesson__opens_at__lte=to_date)
         return queryset
 
-    def get_from_date(self):
+    def get_from_date(self) -> datetime.date:
         from_timestamp = self.request.query_params.get("from")
         try:
-            from_date = datetime.datetime.fromtimestamp(int(from_timestamp))
+            from_date = datetime.datetime.fromtimestamp(int(from_timestamp)).date()
             return from_date
         except (ValueError, TypeError):
             return None
 
-    def get_to_date(self):
+    def get_to_date(self) -> datetime.date:
         to_timestamp = self.request.query_params.get("to")
         try:
-            to_date = datetime.datetime.fromtimestamp(int(to_timestamp))
+            to_date = datetime.datetime.fromtimestamp(int(to_timestamp)).date()
             return to_date
         except (ValueError, TypeError):
             return None
