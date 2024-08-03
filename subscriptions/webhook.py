@@ -52,7 +52,7 @@ def payment_webhook(request, *args, **kwargs):
             create_user_lessons(subscription, user, (lessons_from, lessons_before))
             return HttpResponse(status=200)
     except Exception as e:
-        logging.error(f"{e.__class__.__name__}{e.args}")
+        logger.error(f"{e.__class__.__name__}{e.args}")
         return HttpResponse(status=400)
 
 
