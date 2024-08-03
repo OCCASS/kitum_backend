@@ -25,7 +25,7 @@ class Lesson(BaseModel):
     content = models.TextField(blank=False)
     video = models.FileField(upload_to="videos/", null=False)
     tasks = models.ManyToManyField(Task)
-    opens_at = models.DateTimeField(null=False)
+    opens_at = models.DateField()
     subscriptions = models.ManyToManyField(Subscription)
 
 
@@ -54,7 +54,7 @@ class UserLesson(BaseModel):
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
-    complete_tasks_deadline = models.DateTimeField(null=False)
+    complete_tasks_deadline = models.DateTimeField()
     result = models.IntegerField(null=True)
     tasks = models.ManyToManyField(UserTask)
 

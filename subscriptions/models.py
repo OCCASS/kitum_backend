@@ -38,5 +38,5 @@ class UserSubscription(BaseModel):
 
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
-    active_before = models.DateTimeField(default=None, null=True)
+    active_before = models.DateField(default=None, null=True)
     user = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="subscription")

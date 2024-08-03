@@ -37,14 +37,14 @@ def payment_webhook(request, *args, **kwargs):
                 subscription_order.user,
                 subscription_order.subscription,
             )
-            user_subscription = user.get_subscription()
+            user_subscription: UserSubscription = user.get_subscription()
             if user_subscription:
                 lessons_from = user_subscription.active_before
                 renew_user_subscription(user_subscription)
             else:
-                lessons_from = timezone.now()
+                lessons_from = timezone.localdate()
                 new_user_subscription(subscription, user)
-            lessons_before = user_subscription.acitve_before
+            lessons_before = user_subscription.active_before
             create_user_lessons(subscription, user, (lessons_from, lessons_before))
             return HttpResponse(status=200)
     except Exception as e:
@@ -56,7 +56,7 @@ def new_user_subscription(subscription: Subscription, user: User) -> None:
     """Создает подписку для пользователя"""
 
     now = timezone.now()
-    active_before = now.replace(month=(now.month + 1) % 12)
+    active_before = timezone.localdate().replace(month=(now.month + 1) % 12)
     UserSubscription(
         subscription=subscription,
         purchased_at=now,
