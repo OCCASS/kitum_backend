@@ -60,6 +60,11 @@ class UserLesson(BaseModel):
 
     objects = UserLessonManager()
 
+    def save(self, *args, **kwargs):
+        self.complete_tasks_deadline = self.complete_tasks_deadline.replace(hour=23, minute=59, second=59,
+                                                                            microsecond=0)
+        super().save(*args, **kwargs)
+
     @property
     def is_closed(self):
         return self.lesson.opens_at > timezone.now()
