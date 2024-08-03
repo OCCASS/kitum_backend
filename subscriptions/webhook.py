@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -18,6 +19,8 @@ from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
 
+logger = logging.getLogger(__name__)
+
 
 @csrf_exempt
 def payment_webhook(request, *args, **kwargs):
@@ -26,6 +29,7 @@ def payment_webhook(request, *args, **kwargs):
     # TODO: add prev month subscription order
     ip, _ = get_client_ip(request)
     if not SecurityHelper().is_ip_trusted(ip):
+        logger.error(f"Webhook call from not trusted ip - {ip}")
         return HttpResponse(status=400)
 
     data = json.loads(request.body)
@@ -48,7 +52,7 @@ def payment_webhook(request, *args, **kwargs):
             create_user_lessons(subscription, user, (lessons_from, lessons_before))
             return HttpResponse(status=200)
     except Exception as e:
-        # TODO: add logging
+        logging.error(f"{e.__class__.__name__}{e.args}")
         return HttpResponse(status=400)
 
 
