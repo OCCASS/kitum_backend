@@ -9,6 +9,8 @@ env = environ.Env(DEBUG=(bool, False))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOGS_DIR = BASE_DIR / "logs"
+
 environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
@@ -90,21 +92,67 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False,  # Ensure existing loggers are not disabled
+    "disable_existing_loggers": False,
     "filters": {"require_debug_true": {"()": "django.utils.log.RequireDebugTrue"}},
+    "formatters": {
+        "simple": {
+            "format": "[{asctime}] ({levelname}) - {message}",
+            "datefmt": "%d.%m.%Y %H:%M:%S",
+            "style": "{"
+        },
+        "verbose": {
+            "format": '[{asctime}] ({levelname}) "{name}:{lineno}" - {message}',
+            "datefmt": "%d.%m.%Y %H:%M:%S",
+            "style": "{"
+        }
+    },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "filters": ["require_debug_true"],
             "class": "logging.StreamHandler",
+            "formatter": "verbose"
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOGS_DIR / "logs.log",
+            "formatter": "verbose"
+        },
+        "django_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOGS_DIR / "django.log",
+            "formatter": "simple"
+        },
+        "django_db": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOGS_DIR / "django_db.log",
+            "formatter": "simple"
         }
     },
     "loggers": {
         "django.request": {
             "level": "DEBUG",
-            "handlers": ["console"],
+            "handlers": ["console", "django_file"],
             "propagate": False,
         },
+        "django.security": {
+            "level": "DEBUG",
+            "handlers": ["django_file"],
+            "propagate": False,
+        },
+        "django.db": {
+            "level": "DEBUG",
+            "handlers": ["django_db"],
+            "propagate": False,
+        },
+        "": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": False
+        }
     },
 }
 
