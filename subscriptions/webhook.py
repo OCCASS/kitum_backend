@@ -47,7 +47,7 @@ def payment_webhook(request, *args, **kwargs):
                 renew_user_subscription(user_subscription)
             else:
                 lessons_from = timezone.localdate()
-                new_user_subscription(subscription, user)
+                user_subscription = new_user_subscription(subscription, user)
             lessons_before = user_subscription.active_before
             create_user_lessons(subscription, user, (lessons_from, lessons_before))
             return HttpResponse(status=200)
@@ -56,17 +56,19 @@ def payment_webhook(request, *args, **kwargs):
         return HttpResponse(status=400)
 
 
-def new_user_subscription(subscription: Subscription, user: User) -> None:
+def new_user_subscription(subscription: Subscription, user: User) -> UserSubscription:
     """Создает подписку для пользователя"""
 
     now = timezone.now()
     active_before = timezone.localdate().replace(month=(now.month + 1) % 12)
-    UserSubscription(
+    user_subscription = UserSubscription(
         subscription=subscription,
         purchased_at=now,
         active_before=active_before,
         user=user
-    ).save()
+    )
+    user_subscription.save()
+    return user_subscription
 
 
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
