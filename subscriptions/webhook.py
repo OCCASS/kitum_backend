@@ -39,12 +39,16 @@ def payment_webhook(request, *args, **kwargs):
             )
             user_subscription = user.get_subscription()
             if user_subscription:
+                lessons_from = user_subscription.active_before
                 renew_user_subscription(user_subscription)
             else:
+                lessons_from = timezone.now()
                 new_user_subscription(subscription, user)
-            create_user_lessons(subscription, user)
+            lessons_before = user_subscription.acitve_before
+            create_user_lessons(subscription, user, (lessons_from, lessons_before))
             return HttpResponse(status=200)
     except Exception as e:
+        # TODO: add logging
         return HttpResponse(status=400)
 
 
@@ -72,15 +76,15 @@ def renew_user_subscription(user_subscription: UserSubscription) -> None:
     user_subscription.save()
 
 
-def create_user_lessons(subscription: Subscription, user: User) -> None:
+def create_user_lessons(subscription: Subscription, user: User, period: tuple[timezone, timezone]) -> None:
     """Создать уроки пользователя на купленный месяц, в следствии покупки подписки"""
 
-    current_month = timezone.now().month
+    from_, before = period
     exists_lessons = UserLesson.objects.filter(user=user).values_list(
         "lesson_id", flat=True
     )
     lessons = (
-        subscription.lesson_set.filter(opens_at__month=current_month)
+        subscription.lesson_set.filter(opens_at__gte=from_, opens_at__lte=before)
         .exclude(id__in=exists_lessons)
         .order_by("created_at")
         .prefetch_related("subscriptions", "tasks")
