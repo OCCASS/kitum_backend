@@ -5,6 +5,7 @@ from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import Response
 from rest_framework.permissions import IsAuthenticated
 
+from user.permissions import IsUserHaveSubscription
 from .exceptions import *
 from .serializers import *
 
@@ -190,7 +191,7 @@ class SkipVariantTaskView(GenericAPIView):
 
 class GenerateVariantView(GenericAPIView):
     serializer_class = GenerateVariantSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsUserHaveSubscription)
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
