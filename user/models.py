@@ -18,6 +18,7 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
 
     first_name = models.CharField(max_length=120, null=False)
     last_name = models.CharField(max_length=120, null=False)
+    birthday = models.DateField(null=True)
     avatar = models.FileField(upload_to="avatar")
     email = models.EmailField(null=False, unique=True)
     password = models.CharField(max_length=256)
