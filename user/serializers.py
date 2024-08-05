@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model, password_validation
-from rest_framework.serializers import CharField, FileField, Serializer
+from rest_framework.serializers import CharField, FileField, Serializer, DateField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from subscriptions.serializers import UserSubscriptionSerializer
@@ -50,10 +50,12 @@ class UserSerializer(ModelSerializer):
 class EditUserSerializer(Serializer):
     first_name = CharField(required=True, allow_blank=False)
     last_name = CharField(required=True, allow_blank=False)
+    birthday = DateField(required=False, allow_null=True)
 
     def update(self, instance: User, validated_data):
         instance.first_name = validated_data["first_name"]
         instance.last_name = validated_data["last_name"]
+        instance.birthday = validated_data["birthday"]
         instance.save()
         return instance
 
