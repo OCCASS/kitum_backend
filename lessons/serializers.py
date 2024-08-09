@@ -49,9 +49,7 @@ class UserLessonSerializer(ModelSerializer):
         return self._serialized_tasks(obj)
 
     def get_video(self, obj: UserLesson):
-        request = self.context.get("request")
-        file_url = obj.lesson.video.url
-        return request.build_absolute_uri(file_url)
+        return obj.lesson.video_url
 
     def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed
