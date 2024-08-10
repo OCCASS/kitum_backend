@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 from core.models import BaseModel
 
@@ -13,6 +14,7 @@ class Subscription(BaseModel):
 
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
+    advantages = ArrayField(models.CharField(max_length=120), blank=False)
 
 
 class SubscriptionOrder(BaseModel):
