@@ -16,6 +16,7 @@ class UserSubscriptionSerializer(ModelSerializer):
             "title",
             "price",
             "active_before",
+            "canceled_at",
         )
 
     def get_title(self, instance: UserSubscription):

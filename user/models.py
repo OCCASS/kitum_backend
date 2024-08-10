@@ -31,4 +31,4 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
     objects = CustomUserManager()
 
     def get_subscription(self):
-        return self.subscription.filter(active_before__gt=timezone.now()).first()
+        return self.subscription.filter(active_before__gt=timezone.now(), canceled_at=None).first()

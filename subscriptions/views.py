@@ -1,14 +1,15 @@
-from rest_framework.exceptions import APIException
+from django.shortcuts import get_object_or_404
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import Response
 
 from services.payment import create_payment
 from subscriptions.exceptions import UserAlreadyHaveSubscription
-from subscriptions.models import Subscription, SubscriptionOrder
+from subscriptions.models import Subscription, SubscriptionOrder, UserSubscription
 from subscriptions.serializers import (
     OrderSubscriptionSerializer,
     SubscriptionSerializer,
+    UserSubscriptionSerializer
 )
 
 
@@ -16,6 +17,17 @@ class SubscriptionsList(ListAPIView):
     queryset = Subscription.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = SubscriptionSerializer
+
+
+class CancelSubscription(GenericAPIView):
+    queryset = UserSubscription.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSubscriptionSerializer
+
+    def post(self, request, *args, **kwargs):
+        subscription = get_object_or_404(UserSubscription, pk=self.kwargs["pk"], user=request.user)
+        subscription.cancel()
+        return Response({})
 
 
 class OrderSubscription(GenericAPIView):

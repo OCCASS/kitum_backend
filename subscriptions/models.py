@@ -1,7 +1,9 @@
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.utils import timezone
 
 from core.models import BaseModel
+from subscriptions.exceptions import AlreadyCanceled
 
 
 class Subscription(BaseModel):
@@ -40,5 +42,12 @@ class UserSubscription(BaseModel):
 
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
+    canceled_at = models.DateTimeField(default=None, null=True)
     active_before = models.DateField(default=None, null=True)
     user = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="subscription")
+
+    def cancel(self):
+        if self.canceled_at:
+            raise AlreadyCanceled
+
+        self.canceled_at = timezone.now()
