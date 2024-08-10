@@ -28,7 +28,7 @@ class UserSubscriptionSerializer(ModelSerializer):
 class SubscriptionSerializer(ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ("id", "title", "price")
+        fields = ("id", "title", "price", "advantages")
 
 
 class OrderSubscriptionSerializer(Serializer):
