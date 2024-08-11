@@ -59,11 +59,12 @@ def payment_webhook(request, *args, **kwargs):
 def new_user_subscription(subscription: Subscription, user: User) -> UserSubscription:
     """Создает подписку для пользователя"""
 
-    now = timezone.now()
-    active_before = timezone.localdate() + timezone.timedelta(days=31)
+    today = timezone.localdate()
+    next_month = (today.month + 1) % 12
+    active_before = today.replace(month=next_month)
     user_subscription = UserSubscription(
         subscription=subscription,
-        purchased_at=now,
+        purchased_at=timezone.now(),
         active_before=active_before,
         user=user
     )
@@ -74,7 +75,8 @@ def new_user_subscription(subscription: Subscription, user: User) -> UserSubscri
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
     """Продлевает подписку пользователя еще на 1 месяц"""
 
-    active_before = user_subscription.active_before + timezone.timedelta(days=31)
+    next_month = (user_subscription.active_before.month + 1) % 12
+    active_before = user_subscription.active_before.replace(month=next_month)
     user_subscription.active_before = active_before
     user_subscription.purchased_at = timezone.now()
     user_subscription.save()
