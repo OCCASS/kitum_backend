@@ -56,16 +56,19 @@ def payment_webhook(request, *args, **kwargs):
         return HttpResponse(status=400)
 
 
+def _get_expires_at_from_today() -> timezone.localdate:
+    today = timezone.localdate()
+    next_month = (today.month + 1) % 12
+    return today.replace(month=next_month)
+
+
 def new_user_subscription(subscription: Subscription, user: User) -> UserSubscription:
     """Создает подписку для пользователя"""
 
-    today = timezone.localdate()
-    next_month = (today.month + 1) % 12
-    expires_at = today.replace(month=next_month)
     user_subscription = UserSubscription(
         subscription=subscription,
         purchased_at=timezone.now(),
-        expires_at=expires_at,
+        expires_at=_get_expires_at_from_today(),
         user=user
     )
     user_subscription.save()
@@ -75,8 +78,12 @@ def new_user_subscription(subscription: Subscription, user: User) -> UserSubscri
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
     """Продлевает подписку пользователя еще на 1 месяц"""
 
-    next_month = (user_subscription.expires_at.month + 1) % 12
-    expires_at = user_subscription.expires_at.replace(month=next_month)
+    if user_subscription.status == UserSubscription.CANCELED:
+        expires_at = _get_expires_at_from_today()
+    else:
+        next_month = (user_subscription.expires_at.month + 1) % 12
+        expires_at = user_subscription.expires_at.replace(month=next_month)
+
     user_subscription.expires_at = expires_at
     user_subscription.purchased_at = timezone.now()
     user_subscription.status = UserSubscription.ACTIVE
