@@ -43,12 +43,12 @@ def payment_webhook(request, *args, **kwargs):
             )
             user_subscription: UserSubscription = user.get_subscription()
             if user_subscription:
-                lessons_from = user_subscription.active_before
+                lessons_from = user_subscription.expires_at
                 renew_user_subscription(user_subscription)
             else:
                 lessons_from = timezone.localdate()
                 user_subscription = new_user_subscription(subscription, user)
-            lessons_to = user_subscription.active_before
+            lessons_to = user_subscription.expires_at
             create_user_lessons(subscription, user, (lessons_from, lessons_to))
             return HttpResponse(status=200)
     except Exception as e:
@@ -61,11 +61,11 @@ def new_user_subscription(subscription: Subscription, user: User) -> UserSubscri
 
     today = timezone.localdate()
     next_month = (today.month + 1) % 12
-    active_before = today.replace(month=next_month)
+    expires_at = today.replace(month=next_month)
     user_subscription = UserSubscription(
         subscription=subscription,
         purchased_at=timezone.now(),
-        active_before=active_before,
+        expires_at=expires_at,
         user=user
     )
     user_subscription.save()
@@ -75,10 +75,11 @@ def new_user_subscription(subscription: Subscription, user: User) -> UserSubscri
 def renew_user_subscription(user_subscription: UserSubscription) -> None:
     """Продлевает подписку пользователя еще на 1 месяц"""
 
-    next_month = (user_subscription.active_before.month + 1) % 12
-    active_before = user_subscription.active_before.replace(month=next_month)
-    user_subscription.active_before = active_before
+    next_month = (user_subscription.expires_at.month + 1) % 12
+    expires_at = user_subscription.expires_at.replace(month=next_month)
+    user_subscription.expires_at = expires_at
     user_subscription.purchased_at = timezone.now()
+    user_subscription.status = UserSubscription.ACTIVE
     user_subscription.save()
 
 

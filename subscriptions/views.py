@@ -25,7 +25,7 @@ class CancelSubscription(GenericAPIView):
     serializer_class = UserSubscriptionSerializer
 
     def post(self, request, *args, **kwargs):
-        subscription = get_object_or_404(UserSubscription, pk=self.kwargs["pk"], user=request.user)
+        subscription = get_object_or_404(UserSubscription, pk=request.user.subscription.id, user=request.user)
         subscription.cancel()
         return Response({})
 
