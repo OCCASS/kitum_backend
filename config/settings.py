@@ -211,8 +211,8 @@ CONFIRM_MAIL_BASE_URL = env.str("CONFIRM_MAIL_BASE_URL")
 CONFIRM_MAIL_TOKEN_LIFETIME = timedelta(minutes=10)
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", False)
 EMAIL_HOST = env.str("EMAIL_HOST")
 EMAIL_PORT = env.int("EMAIL_PORT")
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
