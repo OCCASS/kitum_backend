@@ -25,6 +25,7 @@ class CancelSubscription(GenericAPIView):
     serializer_class = UserSubscriptionSerializer
 
     def post(self, request, *args, **kwargs):
+        # TODO: or create cancellation request, because if user cancel subscription and after that buy new cancellation will be forgoten
         user_subscription = request.user.get_subscription()
         subscription = get_object_or_404(UserSubscription, pk=user_subscription.id, user=request.user)
         subscription.cancel()
