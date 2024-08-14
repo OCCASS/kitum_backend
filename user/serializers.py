@@ -23,6 +23,7 @@ class UserSerializer(ModelSerializer):
             "avatar",
             "subscription",
             "birthday",
+            "is_staff"
         )
         extra_kwargs = {"id": {"read_only": True}, "password": {"write_only": True}}
 
