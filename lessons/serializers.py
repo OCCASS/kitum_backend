@@ -4,10 +4,39 @@ from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
     SerializerMethodField,
+    DateField,
+    URLField,
+    ListSerializer
 )
 
 from tasks.serializers import UserTaskSerializer
 from .models import *
+
+
+class LessonSerializer(ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = "__all__"
+
+
+class CreateLessonSerializer(Serializer):
+    title = CharField()
+    opens_at = DateField()
+    video_url = URLField()
+    subscriptions = ListSerializer(child=CharField())
+
+    def save(self, **kwargs):
+        print(self.validated_data)
+        subscriptions_ids = self.validated_data["subscriptions"]
+        subscriptions = Subscription.objects.filter(id__in=subscriptions_ids)
+        lesson = Lesson(
+            title=self.validated_data["title"],
+            opens_at=self.validated_data["opens_at"],
+            video_url=self.validated_data["video_url"],
+        )
+        lesson.save()
+        lesson.subscriptions.add(*subscriptions)
+        lesson.save()
 
 
 class UserLessonSerializer(ModelSerializer):

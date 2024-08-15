@@ -11,6 +11,12 @@ from tasks.serializers import UserTaskSerializer
 from .models import *
 
 
+class VariantSerializer(ModelSerializer):
+    class Meta:
+        model = Variant
+        fields = "__all__"
+
+
 class UserVariantSerializer(ModelSerializer):
     tasks = SerializerMethodField()
 

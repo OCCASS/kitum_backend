@@ -13,6 +13,38 @@ User = get_user_model()
 
 
 class VariantsView(ListAPIView):
+    queryset = Variant.objects.all()
+    serializer_class = VariantSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def filter_queryset(self, queryset):
+        type = self.request.query_params.get("type")
+        if type is not None:
+            return queryset.filter(type=type)
+        return queryset
+
+
+class StartVariantView(GenericAPIView):
+    queryset = Variant.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        variant = get_object_or_404(Variant, pk=self.kwargs["pk"])
+
+        user_tasks = [UserTask(task=task) for task in variant.tasks.all()]
+        UserTask.objects.bulk_create(user_tasks)
+
+        user_variant = UserVariant.objects.create(
+            title=variant.title,
+            user=self.request.user,
+            complexity=1  # TODO: update complexity logic
+        )
+        user_variant.tasks.add(*user_tasks)
+
+        return Response(UserVariantSerializer(user_variant).data)
+
+
+class UserVariantsView(ListAPIView):
     """Список вариантов"""
 
     queryset = UserVariant.objects.all()
@@ -37,7 +69,7 @@ class VariantsView(ListAPIView):
         return context
 
 
-class VariantView(RetrieveAPIView):
+class UserVariantView(RetrieveAPIView):
     """Отдельный вариант"""
 
     queryset = UserVariant.objects.all()
@@ -59,7 +91,7 @@ class VariantView(RetrieveAPIView):
         return context
 
 
-class StartVariantView(GenericAPIView):
+class StartUserVariantView(GenericAPIView):
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantSerializer
     permission_classes = (IsAuthenticated,)
@@ -82,7 +114,7 @@ class StartVariantView(GenericAPIView):
         return context
 
 
-class CompleteVariantView(GenericAPIView):
+class CompleteUserVariantView(GenericAPIView):
     serializer_class = UserVariantSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -104,7 +136,7 @@ class CompleteVariantView(GenericAPIView):
         return context
 
 
-class AnswerVariantTaskView(GenericAPIView):
+class AnswerUserVariantTaskView(GenericAPIView):
     serializer_class = UserVariantSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -153,7 +185,7 @@ class AnswerVariantTaskView(GenericAPIView):
         return serializer.validated_data.get("answer", [])
 
 
-class SkipVariantTaskView(GenericAPIView):
+class SkipUserVariantTaskView(GenericAPIView):
     serializer_class = UserVariantSerializer
     permission_classes = (IsAuthenticated,)
 

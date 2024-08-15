@@ -5,6 +5,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from core.models import BaseModel
 from tasks.models import Task, UserTask
@@ -12,6 +13,11 @@ from .exceptions import VariantAlreadyCompleted, VariantAlreadyStarted
 from .managers import UserVariantManager
 
 User = get_user_model()
+
+
+class VariantType(models.TextChoices):
+    SCHOOL = "school"
+    EXAM = "exam"
 
 
 class Variant(BaseModel):
@@ -22,6 +28,16 @@ class Variant(BaseModel):
 
     title = models.CharField(max_length=255, blank=False)
     tasks = models.ManyToManyField(Task)
+    type = models.CharField(max_length=20, choices=VariantType.choices, default=VariantType.SCHOOL)
+    year = models.PositiveIntegerField(null=True, blank=True, help_text="Год, когда был этот вариант на экзамене")
+
+    def clean(self):
+        super().clean()
+
+        if self.type == VariantType.SCHOOL and self.year is not None:
+            raise ValidationError("У школьного варианта не может быть указан год")
+        elif self.type == VariantType.EXAM and self.year is None:
+            raise ValidationError("У варианата прошлых лет должен быть указан год")
 
 
 class VariantScoreTable(models.Model):
