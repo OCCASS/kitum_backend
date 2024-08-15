@@ -1,12 +1,9 @@
 from django.urls import path
 
 from .views import *
-from . import admin_views
 
 urlpatterns = [
     path("", LessonsView.as_view(), name="lesson_list"),
-    path("all/", admin_views.AllLessonsView.as_view(), name="all_lessons_list"),
-    path("create/", admin_views.CreateLessonView.as_view(), name="all_lessons_list"),
     path(
         "not_completed/",
         NotCompletedLessonsView.as_view(),
