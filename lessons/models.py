@@ -23,7 +23,7 @@ class Lesson(BaseModel):
 
     title = models.CharField(max_length=255, blank=False)
     content = models.TextField(blank=False)
-    video_url = models.URLField(blank=False, null=False)
+    kinescope_video_id = models.CharField(max_length=64, blank=False, null=False)
     tasks = models.ManyToManyField(Task)
     opens_at = models.DateField()
     subscriptions = models.ManyToManyField(Subscription)

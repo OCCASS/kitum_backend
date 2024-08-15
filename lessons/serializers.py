@@ -16,7 +16,7 @@ class UserLessonSerializer(ModelSerializer):
     content = CharField()
     tasks = SerializerMethodField()
     opens_at = SerializerMethodField()
-    video_url = SerializerMethodField()
+    kinescope_video_id = SerializerMethodField()
 
     class Meta:
         model = UserLesson
@@ -34,7 +34,7 @@ class UserLessonSerializer(ModelSerializer):
             "complete_tasks_deadline",
             "opens_at",
             "result",
-            "video_url"
+            "kinescope_video_id"
         )
 
     def get_id(self, obj: UserLesson) -> str:
@@ -48,8 +48,8 @@ class UserLessonSerializer(ModelSerializer):
             return []
         return self._serialized_tasks(obj)
 
-    def get_video_url(self, obj: UserLesson):
-        return obj.lesson.video_url
+    def get_kinescope_video_id(self, obj: UserLesson):
+        return obj.lesson.kinescope_video_id
 
     def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed
