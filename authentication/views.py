@@ -47,7 +47,6 @@ class RegistrationView(GenericAPIView):
         send_mail_task.delay(
             "KITUM – подтверждение почты",
             url,
-            settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
         )
 
@@ -76,7 +75,6 @@ class ResetPasswordRequestView(GenericAPIView):
         send_mail_task.delay(
             "KITUM – сброс пароля",
             f"Ссылка для сбороса пароля – {reset_url}",
-            settings.EMAIL_HOST_USER,
             recipient_list=[email],
         )
         return Response()
