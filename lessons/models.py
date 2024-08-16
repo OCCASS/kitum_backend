@@ -7,6 +7,7 @@ from django.utils import timezone
 from core.models import BaseModel
 from subscriptions.models import Subscription
 from tasks.models import Task, UserTask
+
 from .exceptions import *
 from .managers import UserLessonManager
 
@@ -36,8 +37,7 @@ class UserLesson(BaseModel):
     STARTED = "started"
     COMPLETED = "completed"
     TASKS_COMPLETED = "tasks_completed"
-    STATUS_CHOICES = {0: NOT_STARTED, 1: STARTED, 2: COMPLETED,
-                      3: TASKS_COMPLETED}
+    STATUS_CHOICES = {0: NOT_STARTED, 1: STARTED, 2: COMPLETED, 3: TASKS_COMPLETED}
 
     class Meta:
         db_table = "user_lesson"
@@ -51,7 +51,9 @@ class UserLesson(BaseModel):
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED)
+    status = models.CharField(
+        max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED
+    )
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     complete_tasks_deadline = models.DateTimeField()
@@ -61,8 +63,9 @@ class UserLesson(BaseModel):
     objects = UserLessonManager()
 
     def save(self, *args, **kwargs):
-        self.complete_tasks_deadline = self.complete_tasks_deadline.replace(hour=23, minute=59, second=59,
-                                                                            microsecond=0)
+        self.complete_tasks_deadline = self.complete_tasks_deadline.replace(
+            hour=23, minute=59, second=59, microsecond=0
+        )
         super().save(*args, **kwargs)
 
     @property
@@ -90,7 +93,7 @@ class UserLesson(BaseModel):
             raise LessonTasksAlreadyCompleted
 
         self.status = self.TASKS_COMPLETED
-        self.tasks.filter(answer=None).update(is_skipped=True)
+        self.tasks.filter(answer=None).update(is_correct=False)
         self.result = self._get_result()
         self.save()
 
