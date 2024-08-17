@@ -28,7 +28,7 @@ class UserLessonManager(models.Manager):
             UserLessonQuerySet(self.model, using=self._db)
             .select_related("lesson")
             .annotate(
-                title=models.F("lesson__title"), content=models.F("lesson__content")
+                title=models.F("lesson__title"), description=models.F("lesson__description")
             ),
         )
 

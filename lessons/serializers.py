@@ -13,7 +13,7 @@ from .models import *
 class UserLessonSerializer(ModelSerializer):
     id = SerializerMethodField()
     title = CharField()
-    content = CharField()
+    description = CharField()
     tasks = SerializerMethodField()
     opens_at = SerializerMethodField()
     kinescope_video_id = SerializerMethodField()
@@ -23,7 +23,7 @@ class UserLessonSerializer(ModelSerializer):
         fields = (
             "id",
             "title",
-            "content",
+            "description",
             "tasks",
             "is_closed",
             "status",
