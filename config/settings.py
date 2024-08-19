@@ -98,39 +98,39 @@ LOGGING = {
         "simple": {
             "format": "[{asctime}] ({levelname}) - {message}",
             "datefmt": "%d.%m.%Y %H:%M:%S",
-            "style": "{"
+            "style": "{",
         },
         "verbose": {
             "format": '[{asctime}] ({levelname}) "{name}:{lineno}" - {message}',
             "datefmt": "%d.%m.%Y %H:%M:%S",
-            "style": "{"
-        }
+            "style": "{",
+        },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "filters": ["require_debug_true"],
             "class": "logging.StreamHandler",
-            "formatter": "verbose"
+            "formatter": "verbose",
         },
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": LOGS_DIR / "logs.log",
-            "formatter": "verbose"
+            "formatter": "verbose",
         },
         "django_file": {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": LOGS_DIR / "django.log",
-            "formatter": "simple"
+            "formatter": "simple",
         },
         "django_db": {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": LOGS_DIR / "django_db.log",
-            "formatter": "simple"
-        }
+            "formatter": "simple",
+        },
     },
     "loggers": {
         "django.request": {
@@ -148,11 +148,7 @@ LOGGING = {
             "handlers": ["django_db"],
             "propagate": False,
         },
-        "": {
-            "level": "INFO",
-            "handlers": ["console", "file"],
-            "propagate": False
-        }
+        "": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
     },
 }
 
@@ -189,8 +185,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    # "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -240,6 +235,16 @@ PROFILE_IMAGE_COLORS = (
     {"background": "#f5aa65", "text": "#814711"},
     {"background": "#bcf565", "text": "#538010"},
 )
+
+KINESCOPE = {
+    "API_TOKEN": "db2edc4f-d66a-4c31-a64d-40b7f0cc172a",
+    "API_BASE": "https://api.kinescope.io",
+    "PROJECT_ID": "e307165d-6a96-4f6f-b692-1a26b4e93d9c",
+    "STREAM": {
+        "type": "auto-webinar",
+        "video_presets": ["360p", "480p", "720p", "1080p", "1440p"],
+    },
+}
 
 Configuration.configure_user_agent(framework=Version("Django", "5.0.6"))
 Configuration.account_id = env.int("YOOKASSA_ACCOUNT_ID")
