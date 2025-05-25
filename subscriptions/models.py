@@ -17,6 +17,10 @@ class Subscription(BaseModel):
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     advantages = ArrayField(models.CharField(max_length=120), blank=False)
+    with_home_work = models.BooleanField()
+
+    def __str__(self):
+        return str(self.title)
 
 
 class SubscriptionOrder(BaseModel):
@@ -37,19 +41,21 @@ class UserSubscription(BaseModel):
 
     ACTIVE = "active"
     CANCELED = "canceled"
-    STATUS_CHOICES = {0: ACTIVE, 1: CANCELED}
+    STATUS_CHOICES = {ACTIVE: "Активная", CANCELED: "Отменена"}
 
     class Meta:
         db_table = "user_subscription"
-        verbose_name = "Подписка"
-        verbose_name_plural = "Подписки"
+        verbose_name = "Подписка пользователя"
+        verbose_name_plural = "Подписки пользователей"
 
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
-    canceled_at = models.DateTimeField(default=None, null=True)
+    canceled_at = models.DateTimeField(default=None, null=True, blank=True)
     expires_at = models.DateField(default=None, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=ACTIVE)
-    user = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="subscription")
+    user = models.ForeignKey(
+        "user.User", on_delete=models.CASCADE, related_name="subscription"
+    )
 
     def cancel(self):
         if self.canceled_at:
@@ -58,3 +64,6 @@ class UserSubscription(BaseModel):
         self.status = self.CANCELED
         self.canceled_at = timezone.now()
         self.save()
+
+    def __str__(self):
+        return f"{self.user.email} ({self.subscription.title})"

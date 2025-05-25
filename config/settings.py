@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django import __version__
 from yookassa import Configuration
 from yookassa.domain.common.user_agent import Version
 
@@ -20,8 +21,11 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
     "django.contrib.staticfiles",
     # third party
     "rest_framework",
@@ -44,9 +48,12 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "djangorestframework_camel_case.middleware.CamelCaseMiddleWare",
 ]
@@ -152,6 +159,8 @@ LOGGING = {
     },
 }
 
+CACHES = {"default": env.cache()}
+
 LANGUAGE_CODE = "ru-ru"
 
 TIME_ZONE = "Europe/Moscow"
@@ -181,6 +190,7 @@ REST_FRAMEWORK = {
         "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
         "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
     ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
@@ -246,6 +256,6 @@ KINESCOPE = {
     },
 }
 
-Configuration.configure_user_agent(framework=Version("Django", "5.0.6"))
+Configuration.configure_user_agent(framework=Version("Django", __version__))
 Configuration.account_id = env.int("YOOKASSA_ACCOUNT_ID")
 Configuration.secret_key = env.str("YOOKASSA_SECRET_KEY")

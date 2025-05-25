@@ -1,4 +1,9 @@
-from rest_framework.serializers import CharField, ModelSerializer, Serializer, SerializerMethodField
+from rest_framework.serializers import (
+    CharField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
+)
 
 from subscriptions.models import Subscription, UserSubscription
 
@@ -6,6 +11,7 @@ from subscriptions.models import Subscription, UserSubscription
 class UserSubscriptionSerializer(ModelSerializer):
     title = SerializerMethodField()
     price = SerializerMethodField()
+    with_home_work = SerializerMethodField()
 
     class Meta:
         model = UserSubscription
@@ -15,16 +21,20 @@ class UserSubscriptionSerializer(ModelSerializer):
             "updated_at",
             "title",
             "price",
+            "with_home_work",
             "expires_at",
             "canceled_at",
-            "status"
+            "status",
         )
 
-    def get_title(self, instance: UserSubscription):
+    def get_title(self, instance: UserSubscription) -> str:
         return instance.subscription.title
 
-    def get_price(self, instance: UserSubscription):
+    def get_price(self, instance: UserSubscription) -> int:
         return instance.subscription.price
+
+    def get_with_home_work(self, instance: UserSubscription) -> bool:
+        return instance.subscription.with_home_work
 
 
 class SubscriptionSerializer(ModelSerializer):

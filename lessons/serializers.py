@@ -1,29 +1,51 @@
-from rest_framework.serializers import (
-    CharField,
-    JSONField,
-    ModelSerializer,
-    Serializer,
-    SerializerMethodField,
-)
+from rest_framework.serializers import CharField
+from rest_framework.serializers import FileField
+from rest_framework.serializers import JSONField
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import SerializerMethodField
+from rest_framework.serializers import ValidationError
 
-from tasks.serializers import UserTaskSerializer
 from .models import *
+from subscriptions.serializers import SubscriptionSerializer
+from tasks.serializers import UserTaskSerializer
+from user.serializers import UserSerializer
+
+
+class LessonFileSerializer(ModelSerializer):
+    file = SerializerMethodField()
+
+    class Meta:
+        model = LessonFile
+        fields = (
+            "name",
+            "file",
+        )
+
+    def get_file(self, obj: LessonFile):
+        request = self.context.get("request")
+        file_url = obj.file.url
+        return request.build_absolute_uri(file_url)
 
 
 class UserLessonSerializer(ModelSerializer):
     id = SerializerMethodField()
     title = CharField()
-    description = CharField()
+    content = CharField()
+    files = SerializerMethodField()
     tasks = SerializerMethodField()
     opens_at = SerializerMethodField()
     kinescope_video_id = SerializerMethodField()
+    author = SerializerMethodField()
+    subscription = SerializerMethodField()
 
     class Meta:
         model = UserLesson
         fields = (
             "id",
             "title",
-            "description",
+            "content",
+            "files",
             "tasks",
             "is_closed",
             "status",
@@ -33,8 +55,9 @@ class UserLessonSerializer(ModelSerializer):
             "updated_at",
             "complete_tasks_deadline",
             "opens_at",
-            "result",
-            "kinescope_video_id"
+            "kinescope_video_id",
+            "author",
+            "subscription",
         )
 
     def get_id(self, obj: UserLesson) -> str:
@@ -48,8 +71,22 @@ class UserLessonSerializer(ModelSerializer):
             return []
         return self._serialized_tasks(obj)
 
+    def get_files(self, obj: UserLesson):
+        return LessonFileSerializer(
+            obj.lesson.files, many=True, read_only=True, context=self.context
+        ).data
+
     def get_kinescope_video_id(self, obj: UserLesson):
         return obj.lesson.kinescope_video_id
+
+    def get_author(self, obj: UserLesson):
+        author = obj.lesson.author
+        if author:
+            return UserSerializer(author).data
+        return None
+
+    def get_subscription(self, obj: UserLesson):
+        return SubscriptionSerializer(obj.lesson.subscription).data
 
     def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed
@@ -62,9 +99,10 @@ class UserLessonSerializer(ModelSerializer):
         return data
 
     def _should_hide_tasks(self, obj: UserLesson):
-        return (obj.status != UserLesson.COMPLETED and obj.status != UserLesson.TASKS_COMPLETED) or self.context.get(
-            "without_tasks", False
-        )
+        return (
+            obj.status != UserLesson.COMPLETED
+            and obj.status != UserLesson.TASKS_COMPLETED
+        ) or self.context.get("without_tasks", False)
 
     def _serialized_tasks(self, obj: UserLesson):
         tasks = (
@@ -73,7 +111,9 @@ class UserLessonSerializer(ModelSerializer):
             .order_by("created_at")
         )
         context = self.context
-        context.update({"show_correct_answer": obj.status == UserLesson.TASKS_COMPLETED})
+        context.update(
+            {"show_correct_answer": obj.status == UserLesson.TASKS_COMPLETED}
+        )
         serializer = UserTaskSerializer(
             tasks, many=True, read_only=True, context=context
         )
@@ -81,4 +121,17 @@ class UserLessonSerializer(ModelSerializer):
 
 
 class AnswerTaskSerializer(Serializer):
-    answer = JSONField(required=True)
+    answer = JSONField(required=False)
+    answer_file = FileField(required=False)
+
+    def validate(self, attrs):
+        answer = attrs.get("answer")
+        answer_file = attrs.get("answer_file")
+
+        if not answer and not answer_file:
+            raise ValidationError("You must provide either 'answer' or 'answer_file'.")
+        if answer and answer_file:
+            raise ValidationError(
+                "Only one of 'answer' or 'answer_file' can be provided."
+            )
+        return attrs

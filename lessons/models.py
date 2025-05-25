@@ -1,15 +1,14 @@
-import math
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
+from lessons.exceptions import *
+from lessons.managers import UserLessonManager
 from subscriptions.models import Subscription
-from tasks.models import Task, UserTask
-
-from .exceptions import *
-from .managers import UserLessonManager
+from subscriptions.models import UserSubscription
+from tasks.models import Task
+from tasks.models import UserTask
 
 User = get_user_model()
 
@@ -24,10 +23,36 @@ class Lesson(BaseModel):
 
     title = models.CharField(max_length=255, blank=False)
     kinescope_video_id = models.CharField(max_length=64, blank=False, null=False)
-    description = models.TextField(blank=False)
+    content = models.TextField(blank=False)
     tasks = models.ManyToManyField(Task)
     opens_at = models.DateField()
-    subscriptions = models.ManyToManyField(Subscription)
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        user_subscriptions = UserSubscription.objects.filter(
+            subscription=self.subscription
+        )
+        for s in user_subscriptions:
+            if not UserLesson.objects.filter(lesson=self).exists():
+                UserLesson(
+                    lesson=self, user=s.user, complete_tasks_deadline=timezone.now()
+                ).save()
+
+    def __str__(self):
+        return str(self.title)
+
+
+class LessonFile(BaseModel):
+    """Файл задачи"""
+
+    class Meta:
+        db_table = "lesson_file"
+
+    name = models.CharField(max_length=255, blank=False)
+    file = models.FileField(upload_to="files/lessons")
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="files")
 
 
 class UserLesson(BaseModel):
@@ -37,7 +62,12 @@ class UserLesson(BaseModel):
     STARTED = "started"
     COMPLETED = "completed"
     TASKS_COMPLETED = "tasks_completed"
-    STATUS_CHOICES = {0: NOT_STARTED, 1: STARTED, 2: COMPLETED, 3: TASKS_COMPLETED}
+    STATUS_CHOICES = {
+        NOT_STARTED: NOT_STARTED,
+        STARTED: STARTED,
+        COMPLETED: COMPLETED,
+        TASKS_COMPLETED: TASKS_COMPLETED,
+    }
 
     class Meta:
         db_table = "user_lesson"
@@ -46,18 +76,17 @@ class UserLesson(BaseModel):
             "status",
             "created_at",
         )
-        verbose_name = "Урок"
-        verbose_name_plural = "Уроки"
+        verbose_name = "Урок пользователя"
+        verbose_name_plural = "Уроки пользователя"
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lessons")
     status = models.CharField(
         max_length=15, choices=STATUS_CHOICES, default=NOT_STARTED
     )
-    started_at = models.DateTimeField(null=True)
-    completed_at = models.DateTimeField(null=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     complete_tasks_deadline = models.DateTimeField()
-    result = models.IntegerField(null=True)
     tasks = models.ManyToManyField(UserTask)
 
     objects = UserLessonManager()
@@ -93,13 +122,8 @@ class UserLesson(BaseModel):
             raise LessonTasksAlreadyCompleted
 
         self.status = self.TASKS_COMPLETED
-        self.tasks.filter(answer=None).update(is_correct=False)
-        self.result = self._get_result()
+        self.tasks.filter(answer=None).exclude(type=Task.FILE).update(is_correct=False)
         self.save()
 
-    def _get_result(self) -> int:
-        """Процент от правильно выполненных задач"""
-
-        total_count = self.tasks.all().count()
-        correct_count = self.tasks.filter(is_correct=True).count()
-        return math.ceil(correct_count / total_count * 100)
+    def __str__(self):
+        return f"{self.lesson.title} ({self.user.email})"

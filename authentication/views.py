@@ -12,9 +12,11 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
+from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 
 from core.tasks import send_mail_task
 from user.serializers import UserSerializer
+
 from .exceptions import ConfirmMailTokenIsInvalid, PasswordResetRequestAlreadyCreated
 from .models import ConfirmMail, PasswordReset
 from .serializers import (
@@ -51,8 +53,13 @@ class RegistrationView(GenericAPIView):
         )
 
 
+class TokenRefreshView(BaseTokenRefreshView):
+    permission_classes = (permissions.AllowAny,)
+
+
 class TokenObtainPairView(BaseTokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
+    permission_classes = (permissions.AllowAny,)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

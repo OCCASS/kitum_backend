@@ -1,13 +1,15 @@
 import random
 
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListAPIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.mixins import Response
 from rest_framework.permissions import IsAuthenticated
 
-from user.permissions import IsUserHaveSubscription
 from .exceptions import *
 from .serializers import *
+from user.permissions import IsUserHaveSubscription
 
 User = get_user_model()
 
@@ -37,7 +39,7 @@ class StartVariantView(GenericAPIView):
         user_variant = UserVariant.objects.create(
             title=variant.title,
             user=self.request.user,
-            complexity=1  # TODO: update complexity logic
+            complexity=1,  # TODO: update complexity logic
         )
         user_variant.tasks.add(*user_tasks)
 
@@ -78,9 +80,7 @@ class UserVariantView(RetrieveAPIView):
 
     def get_object(self):
         obj = get_object_or_404(
-            UserVariant,
-            pk=self.kwargs["pk"],
-            user=self.request.user
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
         )
         self.check_object_permissions(self.request, obj)
         return obj
@@ -205,7 +205,9 @@ class SkipUserVariantTaskView(GenericAPIView):
         return context
 
     def _get_user_variant_or_fail(self):
-        return get_object_or_404(UserVariant, pk=self.kwargs["pk"], user=self.request.user)
+        return get_object_or_404(
+            UserVariant, pk=self.kwargs["pk"], user=self.request.user
+        )
 
     def _validate_started_and_not_completed(self, variant: UserVariant):
         if not variant.is_started:
@@ -228,18 +230,17 @@ class GenerateVariantView(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        variant = self._generate_variant(serializer.data["name"], serializer.data["complexity"])
+        variant = self._generate_variant(
+            serializer.data["name"], serializer.data["complexity"]
+        )
         return Response(UserVariantSerializer(variant).data, status=200)
 
     def _generate_variant(self, name: str, complexity: int):
         variant = UserVariant(
-            title=name, user=self.request.user, complexity=complexity,
-            generated=True
+            title=name, user=self.request.user, complexity=complexity, generated=True
         )
         variant.save()
-        sorted_tasks = Task.objects.all().order_by("kim_number")
-        min_kim_number = sorted_tasks.first().kim_number
-        max_kim_number = sorted_tasks.last().kim_number
+        sorted_tasks = Task.objects.all()
 
         tasks_by_kim_number = {}
         for task in sorted_tasks:

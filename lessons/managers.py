@@ -28,8 +28,10 @@ class UserLessonManager(models.Manager):
             UserLessonQuerySet(self.model, using=self._db)
             .select_related("lesson")
             .annotate(
-                title=models.F("lesson__title"), description=models.F("lesson__description")
-            ),
+                title=models.F("lesson__title"),
+                content=models.F("lesson__content"),
+            )
+            .prefetch_related("lesson__files"),
         )
 
     def all_available_for(self, user: User):
@@ -49,8 +51,6 @@ class UserLessonTaskManager(models.Manager):
             .get_queryset()
             .select_related("task")
             .annotate(
-                kim_number=models.F("task__kim_number"),
-                cost=models.F("task__cost"),
                 content=models.F("task__content"),
                 type=models.F("task__type"),
             )

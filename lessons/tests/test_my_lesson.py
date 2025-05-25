@@ -23,7 +23,7 @@ class TestUserLessons(APITestCase):
 
         self.lesson = Lesson(title="Title", content="Content")
         self.lesson.save()
-        task = Task(lesson=self.lesson, kim_number=1, cost=1, correct_answer="123")
+        task = Task(lesson=self.lesson, correct_answer="123")
         task.save()
 
         self.user_lesson = UserLesson(lesson=self.lesson, user=self.user)

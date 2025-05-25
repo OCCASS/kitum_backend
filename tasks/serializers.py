@@ -1,4 +1,6 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField, CharField
+from rest_framework.serializers import CharField
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import SerializerMethodField
 
 from .models import *
 
@@ -20,8 +22,6 @@ class TaskFileSerializer(ModelSerializer):
 
 
 class UserTaskSerializer(ModelSerializer):
-    kim_number = CharField()
-    cost = CharField()
     content = CharField()
     type = CharField()
     files = SerializerMethodField()
@@ -31,19 +31,18 @@ class UserTaskSerializer(ModelSerializer):
         model = UserTask
         fields = (
             "id",
-            "kim_number",
-            "cost",
             "content",
             "answer",
+            "answer_file",
             "type",
             "is_correct",
             "is_skipped",
             "created_at",
             "files",
-            "correct_answer"
+            "correct_answer",
         )
 
-    def get_correct_answer(self, obj: UserTask) -> list | None:
+    def get_correct_answer(self, obj: UserTask) -> str | None:
         if self.context.get("show_correct_answer", False):
             return obj.task.correct_answer
         return None

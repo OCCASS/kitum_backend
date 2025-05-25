@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
         lesson = Lesson.objects.create(
             title=title,
-            description=options.get("description"),
+            content=options.get("content"),
             opens_at=options.get("opens_at"),
             kinescope_video_id=video_id,
         )

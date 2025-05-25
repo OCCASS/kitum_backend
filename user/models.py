@@ -1,14 +1,14 @@
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.auth.models import PermissionManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
 from subscriptions.models import UserSubscription
+
 from .managers import CustomUserManager
 
 
-class User(BaseModel, AbstractBaseUser, PermissionManager):
+class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     """Модель пользователя"""
 
     class Meta:
@@ -31,4 +31,6 @@ class User(BaseModel, AbstractBaseUser, PermissionManager):
     objects = CustomUserManager()
 
     def get_subscription(self):
-        return self.subscription.filter(status=UserSubscription.ACTIVE, expires_at__gt=timezone.now()).first()
+        return self.subscription.filter(
+            status=UserSubscription.ACTIVE, expires_at__gt=timezone.now()
+        ).first()

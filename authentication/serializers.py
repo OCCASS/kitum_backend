@@ -1,9 +1,14 @@
-from user.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenObtainPairSerializer,
 )
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+
+from user.serializers import UserSerializer
 
 User = get_user_model()
 
@@ -18,8 +23,14 @@ class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
                 "User account is not confirmed.", code="authorization"
             )
 
-        seriazlier = UserSerializer(user, context=self.context)
-        return {"user": seriazlier.data, **attrs}
+        # self.deactivate_outstanding_tokens()
+        serializer = UserSerializer(user, context=self.context)
+        return {"user": serializer.data, **attrs}
+
+    def deactivate_outstanding_tokens(self):
+        tokens = OutstandingToken.objects.filter(user=self.user)
+        for token in tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
 
     @classmethod
     def get_token(cls, user: User):

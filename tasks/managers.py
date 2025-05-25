@@ -8,8 +8,6 @@ class UserTaskManager(models.Manager):
             .get_queryset()
             .select_related("task")
             .annotate(
-                kim_number=models.F("task__kim_number"),
-                cost=models.F("task__cost"),
                 content=models.F("task__content"),
                 type=models.F("task__type"),
             )

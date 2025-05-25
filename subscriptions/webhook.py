@@ -8,14 +8,14 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from ipware import get_client_ip
 from yookassa.domain.common import SecurityHelper
-from yookassa.domain.notification import (
-    WebhookNotificationEventType,
-    WebhookNotificationFactory,
-)
+from yookassa.domain.notification import WebhookNotificationEventType
+from yookassa.domain.notification import WebhookNotificationFactory
 
-from lessons.models import Lesson, UserLesson
+from .models import Subscription
+from .models import SubscriptionOrder
+from .models import UserSubscription
+from lessons.models import UserLesson
 from tasks.models import UserTask
-from .models import Subscription, SubscriptionOrder, UserSubscription
 
 User = get_user_model()
 
@@ -36,7 +36,9 @@ def payment_webhook(request, *args, **kwargs):
     try:
         notification = WebhookNotificationFactory().create(data)
         if notification.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
-            subscription_order = SubscriptionOrder.objects.get(payment_id=notification.object.id)
+            subscription_order = SubscriptionOrder.objects.get(
+                payment_id=notification.object.id
+            )
             user, subscription = (
                 subscription_order.user,
                 subscription_order.subscription,
@@ -69,7 +71,7 @@ def new_user_subscription(subscription: Subscription, user: User) -> UserSubscri
         subscription=subscription,
         purchased_at=timezone.now(),
         expires_at=_get_expires_at_from_today(),
-        user=user
+        user=user,
     )
     user_subscription.save()
     return user_subscription
@@ -90,7 +92,9 @@ def renew_user_subscription(user_subscription: UserSubscription) -> None:
     user_subscription.save()
 
 
-def create_user_lessons(subscription: Subscription, user: User, period: tuple[timezone, timezone]) -> None:
+def create_user_lessons(
+    subscription: Subscription, user: User, period: tuple[timezone, timezone]
+) -> None:
     """Создать уроки пользователя на купленный месяц, в следствии покупки подписки"""
 
     from_, to = period

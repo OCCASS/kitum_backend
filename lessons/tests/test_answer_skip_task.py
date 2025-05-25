@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -23,7 +21,7 @@ class TestAnswerSkipTask(APITestCase):
 
         self.lesson = Lesson(title="Title", content="Content")
         self.lesson.save()
-        self.task = Task(lesson=self.lesson, kim_number=1, cost=1, correct_answer="123")
+        self.task = Task(lesson=self.lesson, correct_answer="123")
         self.task.save()
 
         self.user_lesson = UserLesson(lesson=self.lesson, user=self.user)
