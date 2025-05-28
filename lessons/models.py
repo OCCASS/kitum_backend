@@ -8,7 +8,6 @@ from lessons.managers import UserLessonManager
 from subscriptions.models import Subscription
 from subscriptions.models import UserSubscription
 from tasks.models import Task
-from tasks.models import UserTask
 
 User = get_user_model()
 
@@ -21,13 +20,23 @@ class Lesson(BaseModel):
         verbose_name = "Урок"
         verbose_name_plural = "Уроки"
 
-    title = models.CharField(max_length=255, blank=False)
-    kinescope_video_id = models.CharField(max_length=64, blank=False, null=False)
-    content = models.TextField(blank=False)
-    tasks = models.ManyToManyField(Task)
-    opens_at = models.DateField()
-    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    title = models.CharField("Название", max_length=255, blank=False)
+    kinescope_video_id = models.CharField(
+        "ID события Kinescope",
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="Идентификатор события в Kinescope. Создается автоматически после создания урока.",
+    )
+    content = models.TextField("Содержание", blank=False)
+    tasks = models.ManyToManyField(Task, verbose_name="Задачи")
+    opens_at = models.DateField("Когда открывается")
+    subscription = models.ForeignKey(
+        Subscription, verbose_name="Подписка", on_delete=models.SET_NULL, null=True
+    )
+    author = models.ForeignKey(
+        User, verbose_name="Автор", on_delete=models.SET_NULL, null=True
+    )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -49,10 +58,14 @@ class LessonFile(BaseModel):
 
     class Meta:
         db_table = "lesson_file"
+        verbose_name = "Файл урока"
+        verbose_name_plural = "Файлы урока"
 
-    name = models.CharField(max_length=255, blank=False)
-    file = models.FileField(upload_to="files/lessons")
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="files")
+    name = models.CharField("Название", max_length=255, blank=False)
+    file = models.FileField("Файл", upload_to="files/lessons")
+    lesson = models.ForeignKey(
+        Lesson, verbose_name="Урок", on_delete=models.CASCADE, related_name="files"
+    )
 
 
 class UserLesson(BaseModel):
@@ -87,7 +100,7 @@ class UserLesson(BaseModel):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     complete_tasks_deadline = models.DateTimeField()
-    tasks = models.ManyToManyField(UserTask)
+    # tasks = models.ManyToManyField(UserTask)
 
     objects = UserLessonManager()
 

@@ -1,31 +1,30 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import (
-    PasswordResetTokenGenerator,
-    default_token_generator,
-)
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils import timezone
 from rest_framework import permissions
-from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.generics import GenericAPIView
+from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenBlacklistView as BaseTokenBlacklistView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 
+from .exceptions import ConfirmMailTokenIsInvalid
+from .exceptions import PasswordResetRequestAlreadyCreated
+from .models import ConfirmMail
+from .models import PasswordReset
+from .serializers import ConfirmMailSerializer
+from .serializers import ResetPasswordRequestSerializer
+from .serializers import ResetPasswordSerializer
+from .serializers import TokenObtainPairSerializer
+from .tasks import generate_profile_image_for_user_task
 from core.tasks import send_mail_task
 from user.serializers import UserSerializer
-
-from .exceptions import ConfirmMailTokenIsInvalid, PasswordResetRequestAlreadyCreated
-from .models import ConfirmMail, PasswordReset
-from .serializers import (
-    ConfirmMailSerializer,
-    ResetPasswordRequestSerializer,
-    ResetPasswordSerializer,
-    TokenObtainPairSerializer,
-)
-from .tasks import generate_profile_image_for_user_task
 
 User = get_user_model()
 
@@ -152,3 +151,7 @@ class ConfirmMailView(GenericAPIView):
         user = get_object_or_404(User, email=email)
         user.is_confirmed = True
         user.save()
+
+
+class TokenBlacklistView(BaseTokenBlacklistView):
+    permission_classes = (permissions.AllowAny,)

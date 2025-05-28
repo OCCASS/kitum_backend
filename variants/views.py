@@ -1,5 +1,3 @@
-import random
-
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView
@@ -9,7 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 
 from .exceptions import *
 from .serializers import *
-from user.permissions import IsUserHaveSubscription
 
 User = get_user_model()
 
@@ -17,7 +14,6 @@ User = get_user_model()
 class VariantsView(ListAPIView):
     queryset = Variant.objects.all()
     serializer_class = VariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def filter_queryset(self, queryset):
         type = self.request.query_params.get("type")
@@ -28,7 +24,6 @@ class VariantsView(ListAPIView):
 
 class StartVariantView(GenericAPIView):
     queryset = Variant.objects.all()
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         variant = get_object_or_404(Variant, pk=self.kwargs["pk"])
@@ -51,7 +46,6 @@ class UserVariantsView(ListAPIView):
 
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantWithoutTasksSerializer
-    permission_classes = (IsAuthenticated,)
 
     def filter_queryset(self, queryset):
         queryset = queryset.filter(user=self.request.user)
@@ -76,7 +70,6 @@ class UserVariantView(RetrieveAPIView):
 
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_object(self):
         obj = get_object_or_404(
@@ -94,7 +87,6 @@ class UserVariantView(RetrieveAPIView):
 class StartUserVariantView(GenericAPIView):
     queryset = UserVariant.objects.all()
     serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         variant = self.get_object()
@@ -116,7 +108,6 @@ class StartUserVariantView(GenericAPIView):
 
 class CompleteUserVariantView(GenericAPIView):
     serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_object(self) -> UserVariant:
         obj = get_object_or_404(
@@ -138,7 +129,6 @@ class CompleteUserVariantView(GenericAPIView):
 
 class AnswerUserVariantTaskView(GenericAPIView):
     serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         variant = self._get_user_variant_or_fail()
@@ -187,7 +177,6 @@ class AnswerUserVariantTaskView(GenericAPIView):
 
 class SkipUserVariantTaskView(GenericAPIView):
     serializer_class = UserVariantSerializer
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         variant = self._get_user_variant_or_fail()
@@ -223,6 +212,7 @@ class SkipUserVariantTaskView(GenericAPIView):
         return get_object_or_404(UserTask, pk=task_id)
 
 
+"""
 class GenerateVariantView(GenericAPIView):
     serializer_class = GenerateVariantSerializer
     permission_classes = (IsAuthenticated, IsUserHaveSubscription)
@@ -256,3 +246,4 @@ class GenerateVariantView(GenericAPIView):
         variant.tasks.add(*tasks)
         variant.save()
         return variant
+    """

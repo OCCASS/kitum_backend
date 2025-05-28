@@ -7,8 +7,7 @@ urlpatterns = [
     path("register/", RegistrationView.as_view(), name="register"),
     path("login/", TokenObtainPairView.as_view(), name="login"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh_token"),
-    path("logout/", jwt_views.token_blacklist, name="logout"),
-    path("verify_token/", jwt_views.token_verify, name="verify_token"),
+    path("logout/", TokenBlacklistView.as_view(), name="logout"),
     path(
         "reset_password/",
         ResetPasswordRequestView.as_view(),

@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission
 
+from subscriptions.models import UserSubscription
+
 
 class IsLessonOpened(BasePermission):
     def has_object_permission(self, request, view, obj) -> bool:
@@ -8,7 +10,9 @@ class IsLessonOpened(BasePermission):
 
 class HaveHomeworkAccess(BasePermission):
     def has_permission(self, request, view) -> bool:
-        user_subscription = request.user.get_subscription()
-        if user_subscription:
-            return user_subscription.subscription.with_home_work
-        return False
+        has_with_home_work = UserSubscription.objects.filter(
+            user=request.user,
+            status=UserSubscription.ACTIVE,
+            subscription__with_home_work=True,
+        ).exists()
+        return has_with_home_work

@@ -5,6 +5,11 @@ from .views import *
 urlpatterns = [
     path("", LessonsView.as_view(), name="lesson_list"),
     path(
+        "available-subscriptions/",
+        AvailableSubscriptionsView.as_view(),
+        name="available_subscriptions",
+    ),
+    path(
         "not_completed/",
         NotCompletedLessonsView.as_view(),
         name="lesson_not_completed_list",

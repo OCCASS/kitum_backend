@@ -54,7 +54,7 @@ class UserSubscription(BaseModel):
     expires_at = models.DateField(default=None, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=ACTIVE)
     user = models.ForeignKey(
-        "user.User", on_delete=models.CASCADE, related_name="subscription"
+        "user.User", on_delete=models.CASCADE, related_name="subscriptions"
     )
 
     def cancel(self):

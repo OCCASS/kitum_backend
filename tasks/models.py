@@ -15,16 +15,31 @@ class Task(BaseModel):
 
     ANY = "A"
     FILE = "F"
-    TYPE_CHOICES = {ANY: "Any", FILE: "File"}
+    TYPE_CHOICES = {ANY: "Текст", FILE: "Файл"}
 
     class Meta:
         db_table = "task"
         verbose_name = "Задача"
         verbose_name_plural = "Задачи"
 
-    content = models.TextField()
-    correct_answer = models.CharField(blank=True, null=True)
-    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=ANY)
+    name = models.CharField(
+        "Название",
+        max_length=255,
+        help_text="Название задачи не будет нигде отображаться. Оно служит лишь для удобства поиска и выбора задач.",
+    )
+    content = models.TextField(
+        "Содержание",
+        help_text="Текст в формате Markdown. Также текст поддерживает синтаксис LaTeX.",
+    )
+    correct_answer = models.CharField(
+        "Правильный ответ",
+        blank=True,
+        null=True,
+        help_text="Если тип ответа на задачу: Файл, то указывать не нужно.",
+    )
+    type = models.CharField(
+        "Тип ответа на задание", max_length=1, choices=TYPE_CHOICES, default=ANY
+    )
 
     def clean(self):
         if self.type != self.FILE and self.correct_answer is None:
@@ -37,7 +52,7 @@ class Task(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.content)
+        return str(self.name)
 
 
 class TaskFile(BaseModel):
@@ -45,9 +60,11 @@ class TaskFile(BaseModel):
 
     class Meta:
         db_table = "task_file"
+        verbose_name = "Файл задачи"
+        verbose_name_plural = "Файлы задач"
 
-    name = models.CharField(max_length=255, blank=False)
-    file = models.FileField(upload_to="files")
+    name = models.CharField("Название", max_length=255, blank=False)
+    file = models.FileField("Файл", upload_to="files")
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="files")
 
 
@@ -59,13 +76,23 @@ class UserTask(BaseModel):
         verbose_name = "Задача пользователя"
         verbose_name_plural = "Задачи пользователя"
 
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    answer = models.CharField(null=True, blank=True)
-    answer_file = models.FileField(
-        upload_to="user_task_answers/", null=True, blank=True
+    task = models.ForeignKey(Task, verbose_name="Задача", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, verbose_name="Пользователь", on_delete=models.CASCADE
     )
-    is_correct = models.BooleanField(null=True, default=None)
-    is_skipped = models.BooleanField(default=False)
+    lesson = models.ForeignKey(
+        "lessons.UserLesson",
+        verbose_name="Урок",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="tasks",
+    )
+    answer = models.CharField("Ответ", null=True, blank=True)
+    answer_file = models.FileField(
+        "Файл ответа", upload_to="user_task_answers/", null=True, blank=True
+    )
+    is_correct = models.BooleanField("Верно", null=True, default=None)
+    is_skipped = models.BooleanField("Пропущен", default=False)
 
     objects = UserTaskManager()
 
@@ -75,7 +102,7 @@ class UserTask(BaseModel):
         if isinstance(answer, str):
             self.answer = answer
             self.answer_file = None
-            self.is_correct = self.correct_answer == answer
+            self.is_correct = self.task.correct_answer == answer
         elif isinstance(answer, UploadedFile):
             self.answer_file = answer
             self.answer = None
@@ -95,4 +122,4 @@ class UserTask(BaseModel):
         self.save()
 
     def __str__(self):
-        return str(self.task.content)
+        return str(self.task.name)

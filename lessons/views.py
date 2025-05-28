@@ -1,5 +1,4 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from django.core.files.uploadedfile import UploadedFile
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.generics import get_object_or_404
@@ -9,16 +8,17 @@ from rest_framework.parsers import FormParser
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .permissions import *
 from .serializers import *
+from authentication.permissions import OneDevicePermission
 from tasks.models import UserTask
 
 
 class LessonsView(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return UserLesson.objects.filter(user=self.request.user)
@@ -26,7 +26,10 @@ class LessonsView(ListAPIView):
     def filter_queryset(self, queryset):
         status = self.request.query_params.get("status")
         if status is not None and status != "":
-            return queryset.filter(status=status)
+            queryset = queryset.filter(status=status)
+        subscription = self.request.query_params.get("subscription")
+        if subscription is not None and subscription != "":
+            queryset = queryset.filter(lesson__subscription=subscription)
         return queryset
 
     def get_serializer_context(self):
@@ -38,7 +41,6 @@ class LessonsView(ListAPIView):
 class NotCompletedLessonsView(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
@@ -55,11 +57,8 @@ class NotCompletedLessonsView(ListAPIView):
 class LessonView(RetrieveAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated, IsLessonOpened)
+    permission_classes = (IsAuthenticated, OneDevicePermission, IsLessonOpened)
 
-    CACHE_TTL = 60
-
-    @method_decorator(cache_page(CACHE_TTL))
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
 
@@ -77,7 +76,6 @@ class LessonView(RetrieveAPIView):
 
 class CompleteLessonView(GenericAPIView):
     queryset = UserLesson.objects.all()
-    permission_classes = (IsAuthenticated,)
     serializer_class = UserLessonSerializer
 
     def post(self, request, *args, **kwargs):
@@ -99,7 +97,7 @@ class CompleteLessonView(GenericAPIView):
 
 class CompleteLessonTasksView(GenericAPIView):
     queryset = UserLesson.objects.all()
-    permission_classes = (IsAuthenticated, HaveHomeworkAccess)
+    permission_classes = (IsAuthenticated, OneDevicePermission, HaveHomeworkAccess)
     serializer_class = UserLessonSerializer
 
     def post(self, request, *args, **kwargs):
@@ -122,7 +120,6 @@ class CompleteLessonTasksView(GenericAPIView):
 class LessonTaskView(RetrieveAPIView):
     queryset = UserTask.objects.all()
     serializer_class = UserTask
-    permission_classes = (IsAuthenticated,)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -134,7 +131,7 @@ class AnswerLessonTaskView(GenericAPIView):
     queryset = UserTask.objects.all()
     serializer_class = UserLessonSerializer
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = (IsAuthenticated, HaveHomeworkAccess)
+    permission_classes = (IsAuthenticated, OneDevicePermission, HaveHomeworkAccess)
 
     def post(self, request, *args, **kwargs):
         lesson = self._get_user_lesson_or_fail()
@@ -172,11 +169,11 @@ class AnswerLessonTaskView(GenericAPIView):
 
     def _try_to_answer_task(self, task: UserTask):
         answer_data = self._get_answer_data()
-        if not answer_data or not all(answer_data):
+        if not answer_data:
             raise AnswerIsEmptyError
         task.try_answer(answer_data)
 
-    def _get_answer_data(self) -> list:
+    def _get_answer_data(self) -> str | UploadedFile:
         serializer = AnswerTaskSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -190,7 +187,7 @@ class AnswerLessonTaskView(GenericAPIView):
 class SkipLessonTaskView(GenericAPIView):
     queryset = UserTask.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated, HaveHomeworkAccess)
+    permission_classes = (IsAuthenticated, OneDevicePermission, HaveHomeworkAccess)
 
     def post(self, request, *args, **kwargs):
         lesson = self._get_user_lesson_or_fail()
@@ -230,7 +227,7 @@ class SkipLessonTaskView(GenericAPIView):
 class HomeworkLessons(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated, HaveHomeworkAccess)
+    permission_classes = (IsAuthenticated, OneDevicePermission, HaveHomeworkAccess)
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
@@ -247,7 +244,7 @@ class HomeworkLessons(ListAPIView):
 class NotCompletedHomeworkLessons(ListAPIView):
     queryset = UserLesson.objects.all()
     serializer_class = UserLessonSerializer
-    permission_classes = (IsAuthenticated, HaveHomeworkAccess)
+    permission_classes = (IsAuthenticated, OneDevicePermission, HaveHomeworkAccess)
 
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
@@ -258,3 +255,17 @@ class NotCompletedHomeworkLessons(ListAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request, "without_tasks": True})
         return context
+
+
+class AvailableSubscriptionsView(APIView):
+    def get(self, request):
+        subscriptions = (
+            UserLesson.objects.filter(user=request.user)
+            .select_related("lesson__subscription")
+            .values_list("lesson__subscription", flat=True)
+            .distinct()
+        )
+
+        subs = Subscription.objects.filter(id__in=subscriptions)
+        serializer = SubscriptionSerializer(subs, many=True)
+        return Response(serializer.data)

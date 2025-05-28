@@ -1,13 +1,13 @@
 import datetime
 
 from django.utils import timezone
-from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from lessons.models import UserLesson
-
 from .serializers import *
+from lessons.models import UserLesson
 
 
 class ScheduleListView(GenericAPIView):
@@ -53,5 +53,4 @@ class ScheduleListView(GenericAPIView):
 
 class HolidaysListView(ListAPIView):
     queryset = Holiday.objects.all()
-    permission_classes = (IsAuthenticated,)
     serializer_class = HolidaySerializer

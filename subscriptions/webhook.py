@@ -1,4 +1,3 @@
-import json
 import logging
 
 from django.contrib.auth import get_user_model
@@ -22,10 +21,9 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+"""
 @csrf_exempt
 def payment_webhook(request, *args, **kwargs):
-    """Webhook оплаты подписки"""
-
     # TODO: add prev month subscription order
     ip, _ = get_client_ip(request)
     if not SecurityHelper().is_ip_trusted(ip):
@@ -43,7 +41,7 @@ def payment_webhook(request, *args, **kwargs):
                 subscription_order.user,
                 subscription_order.subscription,
             )
-            user_subscription: UserSubscription = user.get_subscription()
+            user_subscription: UserSubscription = user.get_subscriptions()
             if user_subscription:
                 lessons_from = user_subscription.expires_at
                 renew_user_subscription(user_subscription)
@@ -56,6 +54,7 @@ def payment_webhook(request, *args, **kwargs):
     except Exception as e:
         logger.error(f"{e.__class__.__name__}{e.args}")
         return HttpResponse(status=400)
+"""
 
 
 def _get_expires_at_from_today() -> timezone.localdate:

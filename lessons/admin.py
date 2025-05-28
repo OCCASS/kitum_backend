@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import Lesson
 from .models import LessonFile
@@ -18,16 +19,27 @@ class LessonAdmin(admin.ModelAdmin):
         "title",
         "author",
         "kinescope_video_id",
+        "kinescope_link",
         "content",
         "tasks",
         "subscription",
         "opens_at",
     )
+    readonly_fields = ("kinescope_link", "kinescope_video_id")
+    list_filter = ("author", "subscription")
     inlines = [LessonFileInline]
     filter_horizontal = ("tasks",)
+
+    def kinescope_link(self, obj):
+        if obj.kinescope_video_id:
+            url = f"https://kinescope.io/{obj.kinescope_video_id}"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, obj.title)
+        return "-"
+
+    kinescope_link.short_description = "Ссылка на событие Kinescope (для админа)"
 
 
 @admin.register(UserLesson)
 class UserLessonAdmin(admin.ModelAdmin):
     list_display = ("id", "lesson", "user")
-    filter_horizontal = ("tasks",)
+    # filter_horizontal = ("tasks",)

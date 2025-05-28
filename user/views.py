@@ -1,12 +1,13 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.generics import GenericAPIView, RetrieveAPIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .serializers import EditUserAvatarSerializer
+from .serializers import EditUserSerializer
 from user.serializers import UserSerializer
-from .serializers import EditUserAvatarSerializer, EditUserSerializer
 
 User = get_user_model()
 
@@ -14,7 +15,6 @@ User = get_user_model()
 class UserView(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -30,14 +30,15 @@ class UserView(RetrieveAPIView):
 class EditUserView(GenericAPIView):
     queryset = User.objects.all()
     serializer_class = EditUserSerializer
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(UserSerializer(user, context=self.get_serializer_context()).data)
+        return Response(
+            UserSerializer(user, context=self.get_serializer_context()).data
+        )
 
     def get_object(self) -> User:
         user = self.request.user
@@ -53,7 +54,6 @@ class EditUserView(GenericAPIView):
 class EditUserAvatarView(GenericAPIView):
     queryset = User.objects.all()
     serializer_class = EditUserAvatarSerializer
-    permission_classes = (IsAuthenticated,)
     parser_classes = (MultiPartParser,)
 
     def post(self, request, *args, **kwargs):

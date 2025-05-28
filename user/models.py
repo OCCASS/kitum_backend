@@ -1,11 +1,11 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
+from .managers import CustomUserManager
 from core.models import BaseModel
 from subscriptions.models import UserSubscription
-
-from .managers import CustomUserManager
 
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
@@ -30,7 +30,27 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    def get_subscription(self):
-        return self.subscription.filter(
+    def get_subscriptions(self):
+        return self.subscriptions.filter(
             status=UserSubscription.ACTIVE, expires_at__gt=timezone.now()
-        ).first()
+        )
+
+
+class UserSession(BaseModel):
+    class Meta:
+        db_table = "user_session"
+        verbose_name = "Сессия пользователя"
+        verbose_name_plural = "Сессии пользователей"
+
+    user = models.ForeignKey(
+        User, verbose_name="Пользователь", on_delete=models.CASCADE
+    )
+    jti = models.CharField("JTI", max_length=32, unique=True)
+    user_agent = models.TextField("User-Agent", blank=True, null=True)
+    fingerprint = models.CharField("Отпечаток", max_length=32)
+    ip_address = models.GenericIPAddressField("IP-адресс", blank=True, null=True)
+    is_active = models.BooleanField("Активен", default=True)
+
+    def deactivate(self):
+        self.is_active = False
+        self.save(update_fields=["is_active"])

@@ -1,6 +1,11 @@
-from django.contrib.auth import get_user_model, password_validation
-from rest_framework.serializers import CharField, FileField, Serializer, DateField
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from django.contrib.auth import get_user_model
+from django.contrib.auth import password_validation
+from rest_framework.serializers import CharField
+from rest_framework.serializers import DateField
+from rest_framework.serializers import FileField
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import SerializerMethodField
 
 from subscriptions.serializers import UserSubscriptionSerializer
 
@@ -9,7 +14,7 @@ User = get_user_model()
 
 class UserSerializer(ModelSerializer):
     avatar = SerializerMethodField()
-    subscription = SerializerMethodField()
+    subscriptions = SerializerMethodField()
 
     class Meta:
         model = User
@@ -21,9 +26,9 @@ class UserSerializer(ModelSerializer):
             "created_at",
             "password",
             "avatar",
-            "subscription",
+            "subscriptions",
             "birthday",
-            "is_staff"
+            "is_staff",
         )
         extra_kwargs = {"id": {"read_only": True}, "password": {"write_only": True}}
 
@@ -33,11 +38,9 @@ class UserSerializer(ModelSerializer):
             return request.build_absolute_uri(obj.avatar.url)
         return ""
 
-    def get_subscription(self, obj: User):
-        subscription = obj.get_subscription()
-        if subscription:
-            return UserSubscriptionSerializer(subscription).data
-        return None
+    def get_subscriptions(self, obj: User):
+        subscriptions = obj.get_subscriptions()
+        return UserSubscriptionSerializer(subscriptions, many=True).data
 
     def save(self, **kwargs):
         return self.Meta.model.objects.create_user(**self.validated_data)

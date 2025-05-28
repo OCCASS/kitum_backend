@@ -1,10 +1,24 @@
+from django.db.models.base import post_save
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 
 from lessons.models import Lesson
 from lessons.models import UserLesson
+from lessons.services import create_kinescope_live_event
+from lessons.services import CreateKinescopeEventError
 from tasks.models import Task
 from tasks.models import UserTask
+
+
+@receiver(post_save, sender=Lesson)
+def on_lesson_create(sender, instance: Lesson, created, **kwargs):
+    if created and instance.kinescope_video_id is None:
+        try:
+            event_id = create_kinescope_live_event(instance.title, protected=True)
+            instance.kinescope_video_id = event_id
+            instance.save()
+        except CreateKinescopeEventError as e:
+            raise e
 
 
 @receiver(m2m_changed, sender=Lesson.tasks.through)
@@ -18,5 +32,7 @@ def create_user_tasks_on_task_added(sender, instance: Lesson, action, pk_set, **
             for task_id in new_task_ids:
                 task = Task.objects.get(pk=task_id)
                 if not user_lesson.tasks.filter(task=task).exists():
-                    user_task = UserTask.objects.create(task=task)
+                    user_task = UserTask.objects.create(
+                        task=task, user=user_lesson.user
+                    )
                     user_lesson.tasks.add(user_task)

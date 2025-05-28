@@ -1,16 +1,17 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import GenericAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import Response
 
 from services.payment import create_payment
 from subscriptions.exceptions import UserAlreadyHaveSubscription
-from subscriptions.models import Subscription, SubscriptionOrder, UserSubscription
-from subscriptions.serializers import (
-    OrderSubscriptionSerializer,
-    SubscriptionSerializer,
-    UserSubscriptionSerializer
-)
+from subscriptions.models import Subscription
+from subscriptions.models import SubscriptionOrder
+from subscriptions.models import UserSubscription
+from subscriptions.serializers import OrderSubscriptionSerializer
+from subscriptions.serializers import SubscriptionSerializer
 
 
 class SubscriptionsList(ListAPIView):
@@ -19,31 +20,25 @@ class SubscriptionsList(ListAPIView):
     serializer_class = SubscriptionSerializer
 
 
-class CancelSubscription(GenericAPIView):
-    queryset = UserSubscription.objects.all()
-    permission_classes = (IsAuthenticated,)
-    serializer_class = UserSubscriptionSerializer
-
-    def post(self, request, *args, **kwargs):
-        # TODO: or create cancellation request, because if user cancel subscription and after that buy new cancellation will be forgoten
-        user_subscription = request.user.get_subscription()
-        subscription = get_object_or_404(UserSubscription, pk=user_subscription.id, user=request.user)
-        subscription.cancel()
-        return Response({})
-
-
 class OrderSubscription(GenericAPIView):
     serializer_class = OrderSubscriptionSerializer
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        if self.request.user.get_subscription():
-            raise UserAlreadyHaveSubscription
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         subscription = self.get_object()
+
+        # TODO: maybe add expires_at check or set anywhere to status without expirse_at
+        exists = UserSubscription.objects.filter(
+            user=self.request.user,
+            status=UserSubscription.ACTIVE,
+            subscription=subscription,
+        ).exists()
+
+        if exists:
+            raise UserAlreadyHaveSubscription
+
         payment = create_payment(
             subscription.price,
             serializer.data["return_url"],
