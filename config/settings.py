@@ -250,7 +250,7 @@ PROFILE_IMAGE_COLORS = (
 )
 
 KINESCOPE = {
-    "API_TOKEN": env.str("KINESCOPE_API_KEY"),
+    "API_TOKEN": env.str("KINESCIPE_API_KEY"),
     "API_BASE": "https://api.kinescope.io",
     "PROJECT_ID": "e307165d-6a96-4f6f-b692-1a26b4e93d9c",
     "STREAM": {
