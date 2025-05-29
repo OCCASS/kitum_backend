@@ -6,8 +6,8 @@ from core.models import BaseModel
 from lessons.exceptions import *
 from lessons.managers import UserLessonManager
 from subscriptions.models import Subscription
-from subscriptions.models import UserSubscription
 from tasks.models import Task
+from tasks.models import UserTask
 
 User = get_user_model()
 
@@ -31,23 +31,10 @@ class Lesson(BaseModel):
     content = models.TextField("Содержание", blank=False)
     tasks = models.ManyToManyField(Task, verbose_name="Задачи")
     opens_at = models.DateField("Когда открывается")
-    subscription = models.ForeignKey(
-        Subscription, verbose_name="Подписка", on_delete=models.SET_NULL, null=True
-    )
+    subscriptions = models.ManyToManyField(Subscription, verbose_name="Подписки")
     author = models.ForeignKey(
         User, verbose_name="Автор", on_delete=models.SET_NULL, null=True
     )
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        user_subscriptions = UserSubscription.objects.filter(
-            subscription=self.subscription
-        )
-        for s in user_subscriptions:
-            if not UserLesson.objects.filter(lesson=self).exists():
-                UserLesson(
-                    lesson=self, user=s.user, complete_tasks_deadline=timezone.now()
-                ).save()
 
     def __str__(self):
         return str(self.title)
@@ -100,7 +87,7 @@ class UserLesson(BaseModel):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     complete_tasks_deadline = models.DateTimeField()
-    # tasks = models.ManyToManyField(UserTask)
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
 
     objects = UserLessonManager()
 
@@ -135,7 +122,15 @@ class UserLesson(BaseModel):
             raise LessonTasksAlreadyCompleted
 
         self.status = self.TASKS_COMPLETED
-        self.tasks.filter(answer=None).exclude(type=Task.FILE).update(is_correct=False)
+
+        user_tasks = list(self.tasks.select_related("task"))
+        for task in user_tasks:
+            task.is_correct = task.answer == task.task.correct_answer
+        UserTask.objects.bulk_update(user_tasks, ["is_correct"])
+
+        self.tasks.filter(answer=None).exclude(type=Task.FILE).update(
+            is_correct=False, is_skipped=True
+        )
         self.save()
 
     def __str__(self):

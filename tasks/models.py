@@ -102,11 +102,9 @@ class UserTask(BaseModel):
         if isinstance(answer, str):
             self.answer = answer
             self.answer_file = None
-            self.is_correct = self.task.correct_answer == answer
         elif isinstance(answer, UploadedFile):
             self.answer_file = answer
             self.answer = None
-            self.is_correct = None
         else:
             raise ValueError("Unsupported answer type")
 

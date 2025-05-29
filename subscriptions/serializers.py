@@ -1,11 +1,10 @@
-from rest_framework.serializers import (
-    CharField,
-    ModelSerializer,
-    Serializer,
-    SerializerMethodField,
-)
+from rest_framework.serializers import CharField
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import SerializerMethodField
 
-from subscriptions.models import Subscription, UserSubscription
+from subscriptions.models import Subscription
+from subscriptions.models import UserSubscription
 
 
 class UserSubscriptionSerializer(ModelSerializer):
@@ -22,7 +21,6 @@ class UserSubscriptionSerializer(ModelSerializer):
             "title",
             "price",
             "with_home_work",
-            "expires_at",
             "canceled_at",
             "status",
         )
@@ -40,7 +38,7 @@ class UserSubscriptionSerializer(ModelSerializer):
 class SubscriptionSerializer(ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ("id", "title", "price", "advantages")
+        fields = ("id", "title", "price", "advantages", "with_home_work")
 
 
 class OrderSubscriptionSerializer(Serializer):

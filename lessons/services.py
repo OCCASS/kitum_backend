@@ -12,6 +12,7 @@ def create_kinescope_live_event(
     _type: str = "one-time",
     protected: bool = False,
     latency_mode: str = "standard",
+    auto_start: bool = False,
 ) -> str:
     url = "https://api.kinescope.io/v2/live/events"
 
@@ -20,6 +21,8 @@ def create_kinescope_live_event(
         "type": _type,
         "protected": protected,
         "latency_mode": latency_mode,
+        "record": {"parent_id": settings.KINESCOPE["PROJECT_ID"]},
+        "auto_start": auto_start,
     }
     api_token = settings.KINESCOPE["API_TOKEN"]
     headers = {"Authorization": f"Bearer {api_token}"}

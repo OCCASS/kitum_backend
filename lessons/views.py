@@ -29,7 +29,7 @@ class LessonsView(ListAPIView):
             queryset = queryset.filter(status=status)
         subscription = self.request.query_params.get("subscription")
         if subscription is not None and subscription != "":
-            queryset = queryset.filter(lesson__subscription=subscription)
+            queryset = queryset.filter(subscription=subscription)
         return queryset
 
     def get_serializer_context(self):
@@ -64,7 +64,13 @@ class LessonView(RetrieveAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update({"request": self.request})
+        obj = self.get_object()
+        context.update(
+            {
+                "request": self.request,
+                "without_tasks": not obj.subscription.with_home_work,
+            }
+        )
         return context
 
     def get_object(self):
@@ -232,7 +238,8 @@ class HomeworkLessons(ListAPIView):
     def get_queryset(self):
         return UserLesson.objects.all_available_for(self.request.user).filter(
             models.Q(status=UserLesson.COMPLETED)
-            | models.Q(status=UserLesson.TASKS_COMPLETED)
+            | models.Q(status=UserLesson.TASKS_COMPLETED),
+            lesson__subscription__with_home_work=True,
         )
 
     def get_serializer_context(self):
@@ -259,13 +266,10 @@ class NotCompletedHomeworkLessons(ListAPIView):
 
 class AvailableSubscriptionsView(APIView):
     def get(self, request):
-        subscriptions = (
-            UserLesson.objects.filter(user=request.user)
-            .select_related("lesson__subscription")
-            .values_list("lesson__subscription", flat=True)
-            .distinct()
+        subscriptions = UserLesson.objects.filter(user=request.user).values_list(
+            "subscription", flat=True
         )
 
-        subs = Subscription.objects.filter(id__in=subscriptions)
+        subs = Subscription.objects.filter(id__in=subscriptions).distinct()
         serializer = SubscriptionSerializer(subs, many=True)
         return Response(serializer.data)

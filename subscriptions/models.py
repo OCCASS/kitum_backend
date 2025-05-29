@@ -51,7 +51,6 @@ class UserSubscription(BaseModel):
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
     purchased_at = models.DateTimeField(default=None, null=True)
     canceled_at = models.DateTimeField(default=None, null=True, blank=True)
-    expires_at = models.DateField(default=None, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=ACTIVE)
     user = models.ForeignKey(
         "user.User", on_delete=models.CASCADE, related_name="subscriptions"

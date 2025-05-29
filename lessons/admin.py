@@ -14,7 +14,11 @@ class LessonFileInline(admin.TabularInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "opens_at", "subscription")
+    list_display = (
+        "id",
+        "title",
+        "opens_at",
+    )
     fields = (
         "title",
         "author",
@@ -22,13 +26,13 @@ class LessonAdmin(admin.ModelAdmin):
         "kinescope_link",
         "content",
         "tasks",
-        "subscription",
+        "subscriptions",
         "opens_at",
     )
     readonly_fields = ("kinescope_link", "kinescope_video_id")
-    list_filter = ("author", "subscription")
+    list_filter = ("author",)
     inlines = [LessonFileInline]
-    filter_horizontal = ("tasks",)
+    filter_horizontal = ("tasks", "subscriptions")
 
     def kinescope_link(self, obj):
         if obj.kinescope_video_id:

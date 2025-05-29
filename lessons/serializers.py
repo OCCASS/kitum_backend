@@ -86,7 +86,7 @@ class UserLessonSerializer(ModelSerializer):
         return None
 
     def get_subscription(self, obj: UserLesson):
-        return SubscriptionSerializer(obj.lesson.subscription).data
+        return SubscriptionSerializer(obj.subscription).data
 
     def to_representation(self, instance: UserLesson):
         # remove tasks, if lesson not completed

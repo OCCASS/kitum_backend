@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-from django.utils import timezone
 
 from .managers import CustomUserManager
 from core.models import BaseModel
@@ -31,9 +30,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     def get_subscriptions(self):
-        return self.subscriptions.filter(
-            status=UserSubscription.ACTIVE, expires_at__gt=timezone.now()
-        )
+        return self.subscriptions.filter(status=UserSubscription.ACTIVE)
 
 
 class UserSession(BaseModel):
