@@ -239,7 +239,7 @@ class HomeworkLessons(ListAPIView):
         return UserLesson.objects.all_available_for(self.request.user).filter(
             models.Q(status=UserLesson.COMPLETED)
             | models.Q(status=UserLesson.TASKS_COMPLETED),
-            lesson__subscription__with_home_work=True,
+            lesson__subscriptions__with_home_work=True,
         )
 
     def get_serializer_context(self):
