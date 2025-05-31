@@ -16,14 +16,21 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
 
-    first_name = models.CharField(max_length=120, null=False)
-    last_name = models.CharField(max_length=120, null=False)
-    birthday = models.DateField(null=True)
-    avatar = models.FileField(upload_to="avatar")
-    email = models.EmailField(null=False, unique=True)
-    password = models.CharField(max_length=256)
-    is_confirmed = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
+    first_name = models.CharField("Имя", max_length=120, null=False)
+    last_name = models.CharField("Фамилия", max_length=120, null=False)
+    birthday = models.DateField("День рождения", null=True)
+    avatar = models.FileField("Аватарка", upload_to="avatar")
+    email = models.EmailField("Email", null=False, unique=True)
+    telegram = models.CharField(
+        "Ник telegram",
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="Ник Telegram в формате @username",
+    )
+    password = models.CharField("Пароль", max_length=256)
+    is_confirmed = models.BooleanField("Подтвержден", default=True)
+    is_staff = models.BooleanField("Сотрудник", default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ("first_name", "last_name")
