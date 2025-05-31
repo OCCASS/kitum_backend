@@ -37,12 +37,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new:
-            generate_profile_image_for_user_task(self)
-
     def get_subscriptions(self):
         return self.subscriptions.filter(status=UserSubscription.ACTIVE)
 
