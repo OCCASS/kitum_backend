@@ -3,13 +3,10 @@ from io import BytesIO
 
 from celery import shared_task
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-
-User = get_user_model()
 
 
 def _get_text_position(size: int, text: str, font):
@@ -27,9 +24,8 @@ def _select_color():
 
 
 @shared_task
-def generate_profile_image_for_user_task(user_id: str, size=128):
+def generate_profile_image_for_user_task(user, size=128):
     color = _select_color()
-    user = User.objects.get(id=user_id)
     image = Image.new("RGB", (size, size), color=color["background"])
     draw = ImageDraw.Draw(image)
 
